@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 from torch.nn.functional import softplus
-from grid import grid_setup
-from sim import sim, sim_bigbox
+from .grid import grid_setup
+from .sim import sim, sim_bigbox
 from tqdm import trange
 
 torch.set_default_dtype(torch.float32)

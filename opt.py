@@ -59,7 +59,7 @@ def auto_opt(
         x0=x0,
         y0=y0,
     )
-    _, xxs, *_ = grid_setup(ndelta, res=resolution, L=torch.tensor(2.0, device=device))
+    _, xxs, *_ = grid_setup(ndelta, res=resolution, L=torch.tensor(2))
     big0 = torch.argmin(torch.abs(xx[:, 0]))
     small0 = torch.argmin(torch.abs(xxs[:, 0]))
     Bf = Bf[big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :].to(

@@ -5,6 +5,7 @@ torch.set_default_dtype(torch.float32)
 
 @torch.jit.script
 def grid_setup(ndelta, res, L=torch.tensor(2)):
+    device = ndelta.device
     nx = 2 * L * res + 1  # torch.floor(2*L*res).to(torch.int64)
 
     x = torch.linspace(-L, L, nx.item())
@@ -13,7 +14,7 @@ def grid_setup(ndelta, res, L=torch.tensor(2)):
     pmlx = torch.stack([L + n * dx for n in torch.arange(1, ndelta.item() + 1)])
 
     x = torch.cat((-1 * torch.flipud(pmlx), x, pmlx))
-    x.to(device=ndelta.device)
+    x.to(device=device)
     nx = x.shape[0]
     ny = nx
     y = x

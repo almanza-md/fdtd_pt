@@ -3,6 +3,7 @@ from grid import grid_setup
 from fields import masks, advance_flds
 from current import jfunc
 
+torch.set_default_dtype(torch.float32)
 
 @torch.jit.script
 def sim_setup(

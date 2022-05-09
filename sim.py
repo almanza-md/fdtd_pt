@@ -151,7 +151,7 @@ def sim(
         maskex,
         maskey,
         maskez,
-    ) = sim_setup(alpha0, ndelta, res, se, sb, vx, vy, x0, y0,L)
+    ) = sim_setup(alpha0, ndelta, res, se, sb, vx, vy, x0, y0, L)
     for i in torch.arange(0, t.shape[0]):
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
@@ -273,7 +273,7 @@ def sim_EB(
         Earr[..., 0, i] = e_x
         Earr[..., 1, i] = e_y
         Earr[..., 2, i] = e_zx + e_zy
-    return Barr, Earr, xx, yy, t
+    return Barr.cpu(), Earr.cpu(), xx.cpu(), yy.cpu(), t.cpu()
 
 
 def sim_bigbox(
@@ -357,4 +357,4 @@ def sim_bigbox(
     Earr[..., 1] = e_y
     Earr[..., 2] = e_zx + e_zy
 
-    return Barr, Earr, xx, yy, t
+    return Barr.cpu(), Earr.cpu(), xx.cpu(), yy.cpu(), t.cpu()

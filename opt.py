@@ -92,30 +92,31 @@ def auto_opt(
         loss_hist.append(l)
 
         a_opt.step()
-    while not np.isclose(
-        np.log(np.mean(loss_hist[-25:])) - np.log(np.mean(loss_hist[-100:-75])), 0.0
-    ):
-        a_opt.zero_grad()
-        loss = sim(
-            alpha0=func(a),
-            ndelta=ndelta,
-            res=resolution,
-            se=softplus(se),
-            sb=softplus(se),
-            x0=x0,
-            y0=y0,
-            vx=vx,
-            vy=vy,
-            Ef=Ef,
-            Bf=Bf,
-            L=torch.tensor(2),
-        )
-        loss.backward()
-        l = loss.detach().item()
-        if i == 0 or l < min(loss_hist):
-            a_best = (a.clone().detach().cpu(), se.clone().detach().item())
-        a_hist.append((a.clone().detach().cpu(), se.clone().detach().item()))
-        loss_hist.append(l)
+    if loop:
+        while not np.isclose(
+            np.log(np.mean(loss_hist[-25:])) - np.log(np.mean(loss_hist[-100:-75])), 0.0
+        ):
+            a_opt.zero_grad()
+            loss = sim(
+                alpha0=func(a),
+                ndelta=ndelta,
+                res=resolution,
+                se=softplus(se),
+                sb=softplus(se),
+                x0=x0,
+                y0=y0,
+                vx=vx,
+                vy=vy,
+                Ef=Ef,
+                Bf=Bf,
+                L=torch.tensor(2),
+            )
+            loss.backward()
+            l = loss.detach().item()
+            if i == 0 or l < min(loss_hist):
+                a_best = (a.clone().detach().cpu(), se.clone().detach().item())
+            a_hist.append((a.clone().detach().cpu(), se.clone().detach().item()))
+            loss_hist.append(l)
 
-        a_opt.step()
+            a_opt.step()
     return a_best, a_hist, loss_hist, Bf, Ef

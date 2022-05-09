@@ -1,7 +1,7 @@
 import torch
-from grid import grid_setup
-from fields import masks, advance_flds
-from current import jfunc
+from .grid import grid_setup
+from .fields import masks, advance_flds
+from .current import jfunc
 
 torch.set_default_dtype(torch.float32)
 

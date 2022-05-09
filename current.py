@@ -13,9 +13,9 @@ def jfunc(
     radius = 1.75 * dx
     theta = torch.atan2(vy, vx)
     L += delta
-    if torch.isclose(vy, torch.zeros(1)):
+    if torch.isclose(vy, torch.zeros(1,device=device)):
         dist = (L - x0) / torch.cos(theta)
-    elif torch.isclose(vx, torch.zeros(1)):
+    elif torch.isclose(vx, torch.zeros(1,device=device)):
         dist = (L - y0) / torch.sin(theta)
     else:
         dist = torch.min(

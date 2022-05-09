@@ -61,8 +61,8 @@ def sim_setup(
     Cby = (dt / (1 + dt * sigmay / 2)) / dx
     Cay = (1 - dt * sigmay / 2) / (1 + dt * sigmay / 2)
     alpha = torch.ones_like(e_y)
-    alphax = torch.ones((nx, 1))
-    alphay = torch.ones((1, ny))
+    alphax = torch.ones((nx, 1),device=device)
+    alphay = torch.ones((1, ny),device=device)
     alphax[0:ndelta, 0] *= torch.flipud(alpha0)
     alphax[-ndelta:, 0] *= alpha0
     alphay[0, 0:ndelta] *= torch.flipud(alpha0)

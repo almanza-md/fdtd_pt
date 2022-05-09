@@ -15,6 +15,7 @@ def grid_setup(ndelta, res, L=torch.tensor(2)):
 
     x = torch.cat((-1 * torch.flipud(pmlx), x, pmlx))
     x.to(device=device)
+    dx = x[1] - x[0]
     nx = x.shape[0]
     ny = nx
     y = x

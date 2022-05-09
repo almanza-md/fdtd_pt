@@ -1,0 +1,42 @@
+import torch
+from math import sqrt
+
+torch.set_default_dtype(torch.float32)
+
+
+@torch.jit.script
+def jfunc(
+    x, vx, vy, L, x0=torch.tensor(0.0), y0=torch.tensor(0.0), delta=torch.tensor(0.0)
+):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dx = x[1] - x[0]
+    v = torch.sqrt(torch.square(vx) + torch.square(vy))
+    radius = 1.75 * dx
+    theta = torch.atan2(vy, vx)
+    L += delta
+    if torch.isclose(vy, torch.zeros(1)):
+        dist = (L - x0) / torch.cos(theta)
+    elif torch.isclose(vx, torch.zeros(1)):
+        dist = (L - y0) / torch.sin(theta)
+    else:
+        dist = torch.min(
+            torch.stack(((L - x0) / torch.cos(theta), (L - y0) / torch.sin(theta)))
+        )
+    jtmax = dist / v
+    tmax = float(jtmax + 2 * sqrt(2.0) * delta)
+    dt = float(0.98 * dx / sqrt(2))
+    t = torch.arange(start=0, end=tmax, step=dt, device=device)
+    xx, yy, tt = torch.meshgrid(x, x, t, indexing="ij", device=device)
+    c_shape = torch.exp(
+        -1
+        * (torch.square(xx - x0 - vx * tt) + torch.square(yy - y0 - vy * tt))
+        / torch.square(radius)
+    ) / (torch.square(radius * torch.pi))
+    c_shape[torch.isclose(c_shape, torch.zeros_like(c_shape))] *= 0
+    c_weight = torch.ones_like(tt)
+    c_weight[tt > tmax] = 0.0
+    Jx = torch.zeros_like(tt, device=device)
+    Jy = torch.zeros_like(tt, device=device)
+    Jx += c_weight * c_shape * vx
+    Jy += c_weight * c_shape * vy
+    return Jx, Jy, t

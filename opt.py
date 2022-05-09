@@ -40,8 +40,8 @@ def auto_opt(resolution,ndelta,x0=0.,y0=0.,vx=0.,vy=0.,init=(0.,4/0.0315,4/0.031
                                alpha0=a,x0=x0,y0=y0)
     _, xxs, *_ = grid_setup(ndelta,
                                res=resolution)
-    big0 = torch.argmin(torch.abs(xx[:,0]))
-    small0=torch.argmin(torch.abs(xxs[:,0]))
+    big0 = torch.argmin(torch.abs(xx[:,0])).to(device)
+    small0=torch.argmin(torch.abs(xxs[:,0])).to(device)
     Bf = Bf[big0-small0:big0+small0+1,big0-small0:big0+small0+1,:]
     Ef = Ef[big0-small0:big0+small0+1,big0-small0:big0+small0+1,:]
     for i in trange(n_iter):

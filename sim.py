@@ -1,5 +1,5 @@
 import torch
-from .grid import grid_setup
+from .grid import grid_setup, alpha_sigma
 from .fields import masks, advance_flds
 from .current import jfunc
 
@@ -23,53 +23,41 @@ def sim_setup(
         x, xx, yy, delta, e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = grid_setup(
             ndelta, res, L
         )
-        device = x.device
+        device = e_x.device
         dx = x[1] - x[0]
-        nx = x.shape[0]
-        ny = x.shape[0]
-        J_x, J_y, t = jfunc(
-            x, vx, vy, L.to(torch.float32).to(device), x0=x0, y0=y0, delta=delta
-        )
+        # nx = x.shape[0]
+        # ny = x.shape[0]
+        J_x, J_y, t = jfunc(x, vx, vy, L.to(torch.float32), x0=x0, y0=y0, delta=delta)
         dt = t[1] - t[0]
         J_z = torch.zeros_like(J_x[:, :, 0:1])
 
-        in_sim = torch.ones_like(e_x)
+        in_sim = torch.ones_like(J_x[:, :, 0])
         in_sim[0:ndelta, :] *= 0.0
         in_sim[-ndelta:, :] *= 0.0
         in_sim[:, 0:ndelta] *= 0.0
         in_sim[:, -ndelta:] *= 0.0
 
         maskb, maskex, maskey, maskez = masks(e_x)
-    sigmax = torch.zeros_like(e_y)
-    sigmastarx = torch.zeros_like(e_y)
-    sigmay = torch.zeros_like(e_y)
-    sigmastary = torch.zeros_like(e_y)
-
-    sigmax[xx < -L] += se * torch.square((xx + L) / (6 * dx))[xx < -L]
-    sigmay[yy < -L] += se * torch.square((yy + L) / (6 * dx))[yy < -L]
-    sigmax[xx > L] += se * torch.square((xx - L) / (6 * dx))[xx > L]
-    sigmay[yy > L] += se * torch.square((yy - L) / (6 * dx))[yy > L]
-    sigmastarx[xx < -L] += sb * torch.square((xx + L) / (6 * dx))[xx < -L]
-    sigmastary[yy < -L] += sb * torch.square((yy + L) / (6 * dx))[yy < -L]
-    sigmastarx[xx > L] += sb * torch.square((xx - L) / (6 * dx))[xx > L]
-    sigmastary[yy > L] += sb * torch.square((yy - L) / (6 * dx))[yy > L]
+    alpha, sigmax, sigmay, sigmastarx, sigmastary = alpha_sigma(
+        se, sb, alpha0, xx, yy, ndelta, L
+    )
+    dx = dx.to(device)
     Dbx = ((dt / 2) / (1 + dt * sigmastarx / 4)) / dx
+    Dbx = Dbx.to(device)
     Dax = (1 - dt * sigmastarx / 4) / (1 + dt * sigmastarx / 4)
+    Dax = Dax.to(device)
     Cbx = (dt / (1 + dt * sigmax / 2)) / dx
+    Cbx = Cbx.to(device)
     Cax = (1 - dt * sigmax / 2) / (1 + dt * sigmax / 2)
+    Cax = Cax.to(device)
     Dby = ((dt / 2) / (1 + dt * sigmastary / 4)) / dx
+    Dby = Dby.to(device)
     Day = (1 - dt * sigmastary / 4) / (1 + dt * sigmastary / 4)
+    Day = Day.to(device)
     Cby = (dt / (1 + dt * sigmay / 2)) / dx
+    Cby = Cby.to(device)
     Cay = (1 - dt * sigmay / 2) / (1 + dt * sigmay / 2)
-    alpha = torch.ones_like(e_y)
-    alphax = torch.ones((nx, 1), device=device)
-    alphay = torch.ones((1, ny), device=device)
-    alphax[0:ndelta, 0] *= torch.flipud(alpha0)
-    alphax[-ndelta:, 0] *= alpha0
-    alphay[0, 0:ndelta] *= torch.flipud(alpha0)
-    alphay[0, -ndelta:] *= alpha0
-    alpha *= alphax
-    alpha[ndelta:-ndelta] *= alphay
+    Cay = Cay.to(device)
 
     return (
         x,
@@ -152,6 +140,7 @@ def sim(
         maskey,
         maskez,
     ) = sim_setup(alpha0, ndelta, res, se, sb, vx, vy, x0, y0, L)
+    device = e_x.device
     for i in torch.arange(0, t.shape[0]):
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
@@ -162,9 +151,9 @@ def sim(
             b_y,
             b_zx,
             b_zy,
-            J_x[:, :, i] * alpha,
-            J_y[:, :, i] * alpha,
-            J_z[:, :, 0],
+            (J_x[:, :, i] * alpha).to(device),
+            (J_y[:, :, i] * alpha).to(device),
+            J_z[:, :, 0].to(device),
             dx,
             Cax,
             Cbx,
@@ -240,6 +229,7 @@ def sim_EB(
     nx = x.shape[0]
     Barr = torch.zeros((nx, nx, 3, t.shape[0]))
     Earr = torch.zeros((nx, nx, 3, t.shape[0]))
+    device = e_x.device
     for i in torch.arange(0, t.shape[0]):
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
@@ -250,9 +240,9 @@ def sim_EB(
             b_y,
             b_zx,
             b_zy,
-            J_x[..., i] * alpha,
-            J_y[..., i] * alpha,
-            J_z[..., 0],
+            (J_x[:, :, i] * alpha).to(device),
+            (J_y[:, :, i] * alpha).to(device),
+            J_z[:, :, 0].to(device),
             dx,
             Cax,
             Cbx,
@@ -322,7 +312,7 @@ def sim_bigbox(
     nx = x.shape[0]
     Barr = torch.zeros((nx, nx, 3))
     Earr = torch.zeros((nx, nx, 3))
-
+    device = e_x.device
     for i in range(t.shape[0]):
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
@@ -333,9 +323,9 @@ def sim_bigbox(
             b_y,
             b_zx,
             b_zy,
-            J_x[..., i],
-            J_y[..., i],
-            J_z[..., 0],
+            J_x[:, :, i].to(device),
+            J_y[:, :, i].to(device),
+            J_z[:, :, 0].to(device),
             dx,
             Cax,
             Cbx,

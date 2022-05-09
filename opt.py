@@ -43,10 +43,10 @@ def auto_opt(
 
     resolution = torch.tensor(resolution, requires_grad=False, device=device)
     ndelta = torch.tensor(ndelta, requires_grad=False, device=device)
-    x0 = torch.tensor(x0, requires_grad=False, device=device)
-    y0 = torch.tensor(y0, requires_grad=False, device=device)
-    vx = torch.tensor(vx, requires_grad=False, device=device)
-    vy = torch.tensor(vy, requires_grad=False, device=device)
+    x0 = torch.tensor(x0, requires_grad=False)
+    y0 = torch.tensor(y0, requires_grad=False)
+    vx = torch.tensor(vx, requires_grad=False)
+    vy = torch.tensor(vy, requires_grad=False)
 
     Bf, Ef, xx, *_ = sim_bigbox(
         ndelta,

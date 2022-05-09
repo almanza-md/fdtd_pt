@@ -5,15 +5,14 @@ torch.set_default_dtype(torch.float32)
 
 
 def jfunc(x, vx, vy, L, x0, y0, delta):
-    device = x.device
     dx = x[1] - x[0]
     v = torch.sqrt(torch.square(vx) + torch.square(vy))
     radius = 1.75 * dx
     theta = torch.atan2(vy, vx)
     L += delta
-    if torch.isclose(vy, torch.zeros(1, device=device)):
+    if torch.isclose(vy, torch.zeros(1)):
         dist = (L - x0) / torch.cos(theta)
-    elif torch.isclose(vx, torch.zeros(1, device=device)):
+    elif torch.isclose(vx, torch.zeros(1)):
         dist = (L - y0) / torch.sin(theta)
     else:
         dist = torch.min(
@@ -22,7 +21,7 @@ def jfunc(x, vx, vy, L, x0, y0, delta):
     jtmax = dist / v
     tmax = float(jtmax + 2 * sqrt(2.0) * delta)
     dt = float(0.98 * dx / sqrt(2))
-    t = torch.arange(start=0, end=tmax, step=dt, device=device)
+    t = torch.arange(start=0, end=tmax, step=dt)
     xx, yy, tt = torch.meshgrid(x, x, t, indexing="ij")
     c_shape = torch.exp(
         -1

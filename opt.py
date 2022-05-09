@@ -40,14 +40,14 @@ def auto_opt(resolution,ndelta,x0=0.,y0=0.,vx=0.,vy=0.,init=(0.,4/0.0315,4/0.031
                                alpha0=a,x0=x0,y0=y0)
     _, xxs, *_ = grid_setup(ndelta,
                                res=resolution)
-    big0 = torch.argmin(torch.abs(xx[:,0])).to(device)
-    small0=torch.argmin(torch.abs(xxs[:,0])).to(device)
-    Bf = Bf[big0-small0:big0+small0+1,big0-small0:big0+small0+1,:]
-    Ef = Ef[big0-small0:big0+small0+1,big0-small0:big0+small0+1,:]
+    big0 = torch.argmin(torch.abs(xx[:,0]))
+    small0=torch.argmin(torch.abs(xxs[:,0]))
+    Bf = Bf[big0-small0:big0+small0+1,big0-small0:big0+small0+1,:].to(device)
+    Ef = Ef[big0-small0:big0+small0+1,big0-small0:big0+small0+1,:].to(device)
     for i in trange(n_iter):
         a_opt.zero_grad()
         loss = sim(alpha0=func(a),ndelta=ndelta,res=resolution,se=softplus(se),sb=softplus(se),x0=x0,y0=y0,vx=vx,
-                               vy=vy,Ef=Ef,Bf=Bf)
+                               vy=vy,Ef=Ef,Bf=Bf,L=torch.tensor(2))
         loss.backward()
         l = loss.detach().item()
         if i==0 or l < min(loss_hist):
@@ -59,7 +59,7 @@ def auto_opt(resolution,ndelta,x0=0.,y0=0.,vx=0.,vy=0.,init=(0.,4/0.0315,4/0.031
     while not np.isclose(np.log(np.mean(loss_hist[-25:]))-np.log(np.mean(loss_hist[-100:-75])),0.0):
         a_opt.zero_grad()
         loss = sim(alpha0=func(a),ndelta=ndelta,res=resolution,se=softplus(se),sb=softplus(se),x0=x0,y0=y0,vx=vx,
-                               vy=vy,Ef=Ef,Bf=Bf)
+                               vy=vy,Ef=Ef,Bf=Bf,L=torch.tensor(2))
         loss.backward()
         l = loss.detach().item()
         if i==0 or l < min(loss_hist):

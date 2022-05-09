@@ -4,18 +4,16 @@ from math import sqrt
 torch.set_default_dtype(torch.float32)
 
 
-def jfunc(
-    x, vx, vy, L, x0=torch.tensor(0.0), y0=torch.tensor(0.0), delta=torch.tensor(0.0)
-):
+def jfunc(x, vx, vy, L, x0, y0, delta):
     device = x.device
     dx = x[1] - x[0]
     v = torch.sqrt(torch.square(vx) + torch.square(vy))
     radius = 1.75 * dx
     theta = torch.atan2(vy, vx)
     L += delta
-    if torch.isclose(vy, torch.zeros(1,device=device)):
+    if torch.isclose(vy, torch.zeros(1, device=device)):
         dist = (L - x0) / torch.cos(theta)
-    elif torch.isclose(vx, torch.zeros(1,device=device)):
+    elif torch.isclose(vx, torch.zeros(1, device=device)):
         dist = (L - y0) / torch.sin(theta)
     else:
         dist = torch.min(

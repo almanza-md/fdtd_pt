@@ -5,29 +5,30 @@ from .current import jfunc
 
 torch.set_default_dtype(torch.float32)
 
+
 @torch.jit.script
 def sim_setup(
-    alpha0=torch.tensor(5.0),
-    ndelta=torch.tensor(8),
-    res=torch.tensor(32),
-    se=torch.tensor(5.0),
-    sb=torch.tensor(5.0),
-    vx=torch.tensor(0.5),
-    vy=torch.tensor(0.0),
-    x0=torch.tensor(0.0),
-    y0=torch.tensor(0.0),
-    L=torch.tensor(2),
+    alpha0,
+    ndelta,
+    res,
+    se,
+    sb,
+    vx,
+    vy,
+    x0,
+    y0,
+    L,
 ):
     with torch.no_grad():
         x, xx, yy, delta, e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = grid_setup(
-            ndelta, res
+            ndelta, res, L
         )
         device = x.device
         dx = x[1] - x[0]
         nx = x.shape[0]
         ny = x.shape[0]
         J_x, J_y, t = jfunc(
-            x, vx, vy, L.to(torch.float32).to(device), x0=x0, y0=y0, delta=delta
+            x, vx, vy, L.to(torch.float32), x0=x0, y0=y0, delta=delta
         )
         dt = t[1] - t[0]
         J_z = torch.zeros_like(J_x[:, :, 0:1])
@@ -61,8 +62,8 @@ def sim_setup(
     Cby = (dt / (1 + dt * sigmay / 2)) / dx
     Cay = (1 - dt * sigmay / 2) / (1 + dt * sigmay / 2)
     alpha = torch.ones_like(e_y)
-    alphax = torch.ones((nx, 1),device=device)
-    alphay = torch.ones((1, ny),device=device)
+    alphax = torch.ones((nx, 1), device=device)
+    alphay = torch.ones((1, ny), device=device)
     alphax[0:ndelta, 0] *= torch.flipud(alpha0)
     alphax[-ndelta:, 0] *= alpha0
     alphay[0, 0:ndelta] *= torch.flipud(alpha0)
@@ -106,17 +107,18 @@ def sim_setup(
 
 @torch.jit.script
 def sim(
-    alpha0=torch.tensor(5.0),
-    ndelta=torch.tensor(8),
-    res=torch.tensor(32),
-    se=torch.tensor(5.0),
-    sb=torch.tensor(5.0),
-    vx=torch.tensor(0.5),
-    vy=torch.tensor(0.0),
-    x0=torch.tensor(0.0),
-    y0=torch.tensor(0.0),
-    Ef=torch.tensor(0.0),
-    Bf=torch.tensor(0.0),
+    alpha0,
+    ndelta,
+    res,
+    L,
+    se,
+    sb,
+    vx,
+    vy,
+    x0,
+    y0,
+    Ef,
+    Bf,
 ):
     (
         x,
@@ -149,7 +151,7 @@ def sim(
         maskex,
         maskey,
         maskez,
-    ) = sim_setup(alpha0, ndelta, res, se, sb, vx, vy, x0, y0)
+    ) = sim_setup(alpha0, ndelta, res, se, sb, vx, vy, x0, y0,L)
     for i in torch.arange(0, t.shape[0]):
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
@@ -193,14 +195,15 @@ def sim(
 
 def sim_EB(
     ndelta,
-    res=torch.tensor(32),
-    se=torch.tensor(5.0),
-    sb=torch.tensor(5.0),
-    vx=torch.tensor(0.5),
-    vy=torch.tensor(0.0),
-    alpha0=torch.tensor(5.0),
-    x0=torch.tensor(0.0),
-    y0=torch.tensor(0.0),
+    res,
+    se,
+    sb,
+    vx,
+    vy,
+    alpha0,
+    x0,
+    y0,
+    L,
 ):
     (
         x,
@@ -233,7 +236,7 @@ def sim_EB(
         maskex,
         maskey,
         maskez,
-    ) = sim_setup(alpha0, ndelta, res, se, sb, vx, vy, x0, y0)
+    ) = sim_setup(alpha0, ndelta, res, se, sb, vx, vy, x0, y0, L)
     nx = x.shape[0]
     Barr = torch.zeros((nx, nx, 3, t.shape[0]))
     Earr = torch.zeros((nx, nx, 3, t.shape[0]))
@@ -275,14 +278,14 @@ def sim_EB(
 
 def sim_bigbox(
     ndelta,
-    res=torch.tensor(32),
-    se=torch.tensor(5.0),
-    sb=torch.tensor(5.0),
-    vx=torch.tensor(0.5),
-    vy=torch.tensor(0.0),
-    alpha0=torch.tensor(5.0),
-    x0=torch.tensor(0.0),
-    y0=torch.tensor(0.0),
+    res,
+    se,
+    sb,
+    vx,
+    vy,
+    alpha0,
+    x0,
+    y0,
 ):
     (
         x,

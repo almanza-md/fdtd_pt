@@ -4,7 +4,7 @@ torch.set_default_dtype(torch.float32)
 
 
 @torch.jit.script
-def grid_setup(ndelta, res, L=torch.tensor(2)):
+def grid_setup(ndelta, res, L):
     device = ndelta.device
     nx = 2 * L * res.cpu() + 1  # torch.floor(2*L*res).to(torch.int64)
     x = torch.linspace(-L, L, nx.item())

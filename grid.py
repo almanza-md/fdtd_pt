@@ -2,6 +2,8 @@ import torch
 
 torch.set_default_dtype(torch.float32)
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 @torch.jit.script
 def grid_setup(ndelta, res, L=torch.tensor(2)):
@@ -11,7 +13,7 @@ def grid_setup(ndelta, res, L=torch.tensor(2)):
 
     dx = x[1] - x[0]
     pmlx = torch.stack([L + n * dx for n in torch.arange(1, ndelta.item() + 1)])
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     x = torch.cat((-1 * torch.flipud(pmlx), x, pmlx))
     x.to(device=device)
     nx = x.shape[0]

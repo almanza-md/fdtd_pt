@@ -4,7 +4,6 @@ from math import sqrt
 torch.set_default_dtype(torch.float32)
 
 
-@torch.jit.script
 def jfunc(
     x, vx, vy, L, x0=torch.tensor(0.0), y0=torch.tensor(0.0), delta=torch.tensor(0.0)
 ):

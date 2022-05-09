@@ -28,7 +28,7 @@ def sim_setup(
         nx = x.shape[0]
         ny = x.shape[0]
         J_x, J_y, t = jfunc(
-            x, vx, vy, L.to(torch.float32), x0=x0, y0=y0, delta=delta
+            x, vx, vy, L.to(torch.float32).to(device), x0=x0, y0=y0, delta=delta
         )
         dt = t[1] - t[0]
         J_z = torch.zeros_like(J_x[:, :, 0:1])

@@ -25,7 +25,7 @@ def jfunc(
     tmax = float(jtmax + 2 * sqrt(2.0) * delta)
     dt = float(0.98 * dx / sqrt(2))
     t = torch.arange(start=0, end=tmax, step=dt, device=device)
-    xx, yy, tt = torch.meshgrid(x, x, t, indexing="ij", device=device)
+    xx, yy, tt = torch.meshgrid(x, x, t, indexing="ij")
     c_shape = torch.exp(
         -1
         * (torch.square(xx - x0 - vx * tt) + torch.square(yy - y0 - vy * tt))
@@ -34,8 +34,8 @@ def jfunc(
     c_shape[torch.isclose(c_shape, torch.zeros_like(c_shape))] *= 0
     c_weight = torch.ones_like(tt)
     c_weight[tt > tmax] = 0.0
-    Jx = torch.zeros_like(tt, device=device)
-    Jy = torch.zeros_like(tt, device=device)
+    Jx = torch.zeros_like(tt)
+    Jy = torch.zeros_like(tt)
     Jx += c_weight * c_shape * vx
     Jy += c_weight * c_shape * vy
     return Jx, Jy, t

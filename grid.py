@@ -27,5 +27,5 @@ def grid_setup(ndelta, res, L=torch.tensor(2)):
     b_y = torch.zeros((nx, ny), device=device)
     b_zx = torch.zeros((nx, ny), device=device)
     b_zy = torch.zeros((nx, ny), device=device)
-    xx, yy = torch.meshgrid(x, y, indexing="ij", device=device)
+    xx, yy = torch.meshgrid(x, y, indexing="ij")
     return x, xx, yy, delta, e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy

@@ -104,7 +104,7 @@ def sim_setup(
 
 
 @torch.jit.script
-def refsigma(
+def sim(
     alpha0=torch.tensor(5.0),
     ndelta=torch.tensor(8),
     res=torch.tensor(32),
@@ -190,7 +190,7 @@ def refsigma(
     return Utot
 
 
-def refsigma_EB(
+def sim_EB(
     ndelta,
     res=torch.tensor(32),
     se=torch.tensor(5.0),
@@ -272,7 +272,7 @@ def refsigma_EB(
     return Barr, Earr, xx, yy, t
 
 
-def refsigma_big(
+def sim_bigbox(
     ndelta,
     res=torch.tensor(32),
     se=torch.tensor(5.0),

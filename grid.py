@@ -20,6 +20,7 @@ def grid_setup(ndelta, res, L):
     ny = nx
     y = x
     delta = ndelta * dx
+    delta = delta.cpu()
     e_x = torch.zeros((nx, ny), device=device)
     e_y = torch.zeros((nx, ny), device=device)
     e_zx = torch.zeros((nx, ny), device=device)

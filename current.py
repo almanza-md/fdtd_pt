@@ -7,7 +7,7 @@ torch.set_default_dtype(torch.float32)
 def jfunc(
     x, vx, vy, L, x0=torch.tensor(0.0), y0=torch.tensor(0.0), delta=torch.tensor(0.0)
 ):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = x.device
     dx = x[1] - x[0]
     v = torch.sqrt(torch.square(vx) + torch.square(vy))
     radius = 1.75 * dx

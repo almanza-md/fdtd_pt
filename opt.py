@@ -26,21 +26,35 @@ def auto_opt(
     loop=False,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    a = torch.linspace(
-        start=alph0,
-        end=-alph0,
-        steps=ndelta,
-        requires_grad=True,
-        dtype=torch.float32,
-        device=device,
-    )
+    if init[0] == 0:
+        a = torch.linspace(
+            start=alph0,
+            end=-alph0,
+            steps=ndelta,
+            requires_grad=True,
+            dtype=torch.float32,
+            device=device,
+        )
+    else:
+        a = torch.tensor(
+            init[0],
+            requires_grad=True,
+            dtype=torch.float32,
+            device=device,
+        )
     se = torch.tensor(init[1], dtype=torch.float32, requires_grad=True, device=device)
     a_opt = torch.optim.Adam((a, se), lr=0.4)
     loss = 0.0
-    loss_hist = []
-    a_hist = []
+    if not loop:
+        loss_hist = torch.zeros(n_iter, device=device)
+        a_hist = torch.zeros((n_iter, a.shape[0]), device=device)
+        se_hist = torch.zeros(n_iter, device=device)
+    else:
+        loss_hist = []
+        a_hist = []
+        se_hist = []
     a_best = 0.0
-
+    se_best = 0.0
     resolution = torch.tensor(resolution, requires_grad=False, device=device)
     ndelta = torch.tensor(ndelta, requires_grad=False, device=device)
     x0 = torch.tensor(x0, requires_grad=False)
@@ -85,11 +99,13 @@ def auto_opt(
             L=torch.tensor(2),
         )
         loss.backward()
-        l = loss.detach().item()
-        if i == 0 or l < min(loss_hist):
-            a_best = (a.clone().detach().cpu(), se.clone().detach().item())
-        a_hist.append((a.clone().detach().cpu(), se.clone().detach().item()))
-        loss_hist.append(l)
+        l = loss.detach()
+        if i == 0 or l < torch.min(loss_hist):
+            a_best = a.clone().detach()
+            se_best = se.clone().detach()
+        a_hist[i, :] = a.clone().detach()
+        se_hist[i] = se.clone().detach()
+        loss_hist[i] = l
 
         a_opt.step()
     if loop:

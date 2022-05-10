@@ -57,8 +57,8 @@ def get_sigma(se, sb, xx, yy, ndelta, L):
 def get_alpha(alpha0, arr):
     n = alpha0.shape[0]
     alpha = torch.ones_like(arr)
-    alphax = torch.ones((arr.shape[0], 1))
-    alphay = torch.ones((1, arr.shape[1]))
+    alphax = torch.ones((arr.shape[0], 1), device=arr.device)
+    alphay = torch.ones((1, arr.shape[1]), device=arr.device)
     alphax[0:n, 0] *= torch.flipud(alpha0)
     alphax[-n:, 0] *= alpha0
     alphay[0, 0:n] *= torch.flipud(alpha0)

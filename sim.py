@@ -1,5 +1,5 @@
 import torch
-from .grid import grid_setup, alpha_sigma
+from .grid import grid_setup, get_alpha, get_sigma
 from .fields import masks, advance_flds
 from .current import jfunc
 
@@ -38,9 +38,10 @@ def sim_setup(
         in_sim[:, -ndelta:] *= 0.0
 
         maskb, maskex, maskey, maskez = masks(e_x)
-    alpha, sigmax, sigmay, sigmastarx, sigmastary = alpha_sigma(
-        se, sb, alpha0, xx, yy, ndelta, L
+    sigmax, sigmay, sigmastarx, sigmastary = get_sigma(
+        se, sb, xx, yy, ndelta, L
     )
+    alpha = get_alpha(alpha0, e_x)
     dx = dx.to(device)
     Dbx = ((dt / 2) / (1 + dt * sigmastarx / 4)) / dx
     Dbx = Dbx.to(device)

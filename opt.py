@@ -135,4 +135,4 @@ def auto_opt(
             loss_hist.append(l)
 
             a_opt.step()
-    return a_best, a_hist, loss_hist, Bf, Ef
+    return a_best,se_best, a_hist,se_hist, loss_hist, Bf, Ef

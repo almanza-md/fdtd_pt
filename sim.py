@@ -6,7 +6,7 @@ from .current import jfunc
 torch.set_default_dtype(torch.float32)
 
 
-@torch.jit.script
+#@torch.jit.script
 def sim_setup(
     alpha0,
     ndelta,
@@ -96,7 +96,7 @@ def sim_setup(
     )
 
 
-@torch.jit.script
+#@torch.jit.script
 def sim(
     alpha0,
     ndelta,

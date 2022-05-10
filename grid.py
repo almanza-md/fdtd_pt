@@ -39,6 +39,8 @@ def get_sigma(se, sb, xx, yy, ndelta, L):
     sigmastarx = torch.zeros_like(xx, device=device)
     sigmay = torch.zeros_like(xx, device=device)
     sigmastary = torch.zeros_like(xx, device=device)
+    xx = xx.to(device)
+    yy = yy.to(device)
     dx = float(xx[1, 0] - xx[0, 0])
     L = float(L)
     sigmax[xx < -L] += se * torch.square((xx + L) / (6 * dx))[xx < -L]

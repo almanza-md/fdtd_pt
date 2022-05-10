@@ -34,11 +34,13 @@ def grid_setup(ndelta, res, L):
 
 
 def get_sigma(se, sb, xx, yy, ndelta, L):
-    sigmax = torch.zeros_like(xx)
-    sigmastarx = torch.zeros_like(xx)
-    sigmay = torch.zeros_like(xx)
-    sigmastary = torch.zeros_like(xx)
-    dx = xx[1, 0] - xx[0, 0]
+    device = ndelta.device
+    sigmax = torch.zeros_like(xx, device=device)
+    sigmastarx = torch.zeros_like(xx, device=device)
+    sigmay = torch.zeros_like(xx, device=device)
+    sigmastary = torch.zeros_like(xx, device=device)
+    dx = float(xx[1, 0] - xx[0, 0])
+    L = float(L)
     sigmax[xx < -L] += se * torch.square((xx + L) / (6 * dx))[xx < -L]
     sigmay[yy < -L] += se * torch.square((yy + L) / (6 * dx))[yy < -L]
     sigmax[xx > L] += se * torch.square((xx - L) / (6 * dx))[xx > L]
@@ -49,8 +51,9 @@ def get_sigma(se, sb, xx, yy, ndelta, L):
     sigmastary[yy > L] += sb * torch.square((yy - L) / (6 * dx))[yy > L]
     return sigmax, sigmay, sigmastarx, sigmastary
 
-def get_alpha(alpha0,arr):
-    n=alpha0.shape[0]
+
+def get_alpha(alpha0, arr):
+    n = alpha0.shape[0]
     alpha = torch.ones_like(arr)
     alphax = torch.ones((arr.shape[0], 1))
     alphay = torch.ones((1, arr.shape[1]))

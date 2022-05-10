@@ -32,7 +32,7 @@ def sim_setup(
         J_z = torch.zeros_like(J_x)
 
         J = torch.utils.data.TensorDataset(J_x,J_y,J_z)
-        Jloader = torch.utils.data.DataLoader(J,num_workers=torch.get_num_threads(),pin_memory=True,prefetch_factor=8)
+        Jloader = torch.utils.data.DataLoader(J,num_workers=4,pin_memory=True,prefetch_factor=8)
 
         in_sim = torch.ones_like(e_x)
         in_sim[0:ndelta, :] *= 0.0

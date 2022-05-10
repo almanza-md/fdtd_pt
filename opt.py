@@ -99,12 +99,12 @@ def auto_opt(
             L=torch.tensor(2),
         )
         loss.backward()
-        l = loss.clone().detach()
+        l = loss.detach()
         if i == 0 or l < torch.min(loss_hist):
-            a_best = a.clone().detach()
-            se_best = se.clone().detach()
-        a_hist[i, :] = a.clone().detach()
-        se_hist[i] = se.clone().detach()
+            a_best = a.detach()
+            se_best = se.detach()
+        a_hist[i, :] = a.detach()
+        se_hist[i] = se.detach()
         loss_hist[i] = l
 
         a_opt.step()

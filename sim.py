@@ -141,6 +141,7 @@ def sim(
         maskey,
         maskez,
     ) = sim_setup(alpha0, ndelta, res, se, sb, vx, vy, x0, y0, L)
+    device = e_x.device
     for J_x,J_y,J_z in Jloader:
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
@@ -151,9 +152,9 @@ def sim(
             b_y,
             b_zx,
             b_zy,
-            torch.squeeze(J_x) * alpha,
-            torch.squeeze(J_y) * alpha,
-            torch.squeeze(J_z),
+            torch.squeeze(J_x.to(device)) * alpha,
+            torch.squeeze(J_y.to(device)) * alpha,
+            torch.squeeze(J_z.to(device)),
             dx,
             Cax,
             Cbx,
@@ -227,6 +228,7 @@ def sim_EB(
     nx = x.shape[0]
     Barr = torch.zeros((nx, nx, 3, t.shape[0]))
     Earr = torch.zeros((nx, nx, 3, t.shape[0]))
+    device = e_x.device
     for i,(J_x,J_y,J_z) in enumerate(Jloader):
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
@@ -237,9 +239,9 @@ def sim_EB(
             b_y,
             b_zx,
             b_zy,
-            torch.squeeze(J_x) * alpha,
-            torch.squeeze(J_y) * alpha,
-            torch.squeeze(J_z),
+            torch.squeeze(J_x.to(device)) * alpha,
+            torch.squeeze(J_y.to(device)) * alpha,
+            torch.squeeze(J_z.to(device)),
             dx,
             Cax,
             Cbx,
@@ -318,9 +320,9 @@ def sim_bigbox(
             b_y,
             b_zx,
             b_zy,
-            torch.squeeze(J_x),
-            torch.squeeze(J_y),
-            torch.squeeze(J_z),
+            torch.squeeze(J_x.to(device)),
+            torch.squeeze(J_y.to(device)),
+            torch.squeeze(J_z.to(device)),
             dx,
             Cax,
             Cbx,

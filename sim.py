@@ -29,7 +29,10 @@ def sim_setup(
         # ny = x.shape[0]
         J_x, J_y, t = jfunc(x, vx, vy, L.to(torch.float32), x0=x0, y0=y0, delta=delta)
         dt = t[1] - t[0]
-        J_z = torch.zeros_like(J_x[:, :, 0:1])
+        J_z = torch.zeros_like(J_x)
+
+        J = torch.utils.data.TensorDataset(J_x,J_y,J_z)
+        Jloader = torch.utils.data.DataLoader(J,num_workers=2,pin_memory=True)
 
         in_sim = torch.ones_like(e_x)
         in_sim[0:ndelta, :] *= 0.0
@@ -76,9 +79,7 @@ def sim_setup(
         b_zx,
         b_zy,
         alpha,
-        J_x,
-        J_y,
-        J_z,
+        Jloader,
         dx,
         Cax,
         Cbx,
@@ -125,9 +126,7 @@ def sim(
         b_zx,
         b_zy,
         alpha,
-        J_x,
-        J_y,
-        J_z,
+        Jloader,
         dx,
         Cax,
         Cbx,
@@ -142,8 +141,7 @@ def sim(
         maskey,
         maskez,
     ) = sim_setup(alpha0, ndelta, res, se, sb, vx, vy, x0, y0, L)
-    device = e_x.device
-    for i in torch.arange(0, t.shape[0]):
+    for J_x,J_y,J_z in Jloader:
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
             e_y,
@@ -153,9 +151,9 @@ def sim(
             b_y,
             b_zx,
             b_zy,
-            J_x[:, :, i].to(device) * alpha,
-            J_y[:, :, i].to(device) * alpha,
-            J_z[:, :, 0].to(device),
+            J_x * alpha,
+            J_y * alpha,
+            J_z,
             dx,
             Cax,
             Cbx,
@@ -211,9 +209,7 @@ def sim_EB(
         b_zx,
         b_zy,
         alpha,
-        J_x,
-        J_y,
-        J_z,
+        Jloader,
         dx,
         Cax,
         Cbx,
@@ -231,8 +227,7 @@ def sim_EB(
     nx = x.shape[0]
     Barr = torch.zeros((nx, nx, 3, t.shape[0]))
     Earr = torch.zeros((nx, nx, 3, t.shape[0]))
-    device = e_x.device
-    for i in torch.arange(0, t.shape[0]):
+    for i,(J_x,J_y,J_z) in enumerate(Jloader):
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
             e_y,
@@ -242,9 +237,9 @@ def sim_EB(
             b_y,
             b_zx,
             b_zy,
-            J_x[:, :, i].to(device) * alpha,
-            J_y[:, :, i].to(device) * alpha,
-            J_z[:, :, 0].to(device),
+            J_x * alpha,
+            J_y * alpha,
+            J_z,
             dx,
             Cax,
             Cbx,
@@ -294,9 +289,7 @@ def sim_bigbox(
         b_zx,
         b_zy,
         alpha,
-        J_x,
-        J_y,
-        J_z,
+        Jloader,
         dx,
         Cax,
         Cbx,
@@ -315,7 +308,7 @@ def sim_bigbox(
     Barr = torch.zeros((nx, nx, 3))
     Earr = torch.zeros((nx, nx, 3))
     device = e_x.device
-    for i in range(t.shape[0]):
+    for J_x,J_y,J_z in Jloader:
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
             e_y,
@@ -325,9 +318,9 @@ def sim_bigbox(
             b_y,
             b_zx,
             b_zy,
-            J_x[:, :, i].to(device),
-            J_y[:, :, i].to(device),
-            J_z[:, :, 0].to(device),
+            J_x,
+            J_y,
+            J_z,
             dx,
             Cax,
             Cbx,

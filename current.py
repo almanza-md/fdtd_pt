@@ -22,7 +22,7 @@ def jfunc(x, vx, vy, L, x0, y0, delta):
     tmax = float(jtmax + 2 * sqrt(2.0) * delta)
     dt = float(0.98 * dx / sqrt(2))
     t = torch.arange(start=0, end=tmax, step=dt)
-    xx, yy, tt = torch.meshgrid(x, x, t, indexing="ij")
+    tt, xx, yy = torch.meshgrid(t, x, x, indexing="ij")
     c_shape = torch.exp(
         -1
         * (torch.square(xx - x0 - vx * tt) + torch.square(yy - y0 - vy * tt))

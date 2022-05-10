@@ -42,23 +42,24 @@ def sim_setup(
         se, sb, xx, yy, ndelta, L
     )
     alpha = get_alpha(alpha0, e_x)
+    dt = dt.to(device)
     dx = dx.to(device)
     Dbx = ((dt / 2) / (1 + dt * sigmastarx / 4)) / dx
-    Dbx = Dbx.to(device)
+    #Dbx = Dbx.to(device)
     Dax = (1 - dt * sigmastarx / 4) / (1 + dt * sigmastarx / 4)
-    Dax = Dax.to(device)
+    #Dax = Dax.to(device)
     Cbx = (dt / (1 + dt * sigmax / 2)) / dx
-    Cbx = Cbx.to(device)
+    #Cbx = Cbx.to(device)
     Cax = (1 - dt * sigmax / 2) / (1 + dt * sigmax / 2)
-    Cax = Cax.to(device)
+    #Cax = Cax.to(device)
     Dby = ((dt / 2) / (1 + dt * sigmastary / 4)) / dx
-    Dby = Dby.to(device)
+    #Dby = Dby.to(device)
     Day = (1 - dt * sigmastary / 4) / (1 + dt * sigmastary / 4)
-    Day = Day.to(device)
+    #Day = Day.to(device)
     Cby = (dt / (1 + dt * sigmay / 2)) / dx
-    Cby = Cby.to(device)
+    #Cby = Cby.to(device)
     Cay = (1 - dt * sigmay / 2) / (1 + dt * sigmay / 2)
-    Cay = Cay.to(device)
+    #Cay = Cay.to(device)
 
     return (
         x,
@@ -152,8 +153,8 @@ def sim(
             b_y,
             b_zx,
             b_zy,
-            (J_x[:, :, i] * alpha).to(device),
-            (J_y[:, :, i] * alpha).to(device),
+            J_x[:, :, i].to(device) * alpha,
+            J_y[:, :, i].to(device) * alpha,
             J_z[:, :, 0].to(device),
             dx,
             Cax,
@@ -241,8 +242,8 @@ def sim_EB(
             b_y,
             b_zx,
             b_zy,
-            (J_x[:, :, i] * alpha).to(device),
-            (J_y[:, :, i] * alpha).to(device),
+            J_x[:, :, i].to(device) * alpha,
+            J_y[:, :, i].to(device) * alpha,
             J_z[:, :, 0].to(device),
             dx,
             Cax,

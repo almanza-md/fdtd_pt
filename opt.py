@@ -99,7 +99,7 @@ def auto_opt(
             L=torch.tensor(2),
         )
         loss.backward()
-        l = loss.detach()
+        l = loss.clone().detach()
         if i == 0 or l < torch.min(loss_hist):
             a_best = a.clone().detach()
             se_best = se.clone().detach()

@@ -31,7 +31,7 @@ def sim_setup(
         dt = t[1] - t[0]
         J_z = torch.zeros_like(J_x[:, :, 0:1])
 
-        in_sim = torch.ones_like(J_x[:, :, 0])
+        in_sim = torch.ones_like(e_x)
         in_sim[0:ndelta, :] *= 0.0
         in_sim[-ndelta:, :] *= 0.0
         in_sim[:, 0:ndelta] *= 0.0

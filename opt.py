@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from torch.nn.functional import softplus
 from .grid import grid_setup
-from .sim import sim, sim_bigbox
+from .sim import sim_setup, sim, sim_bigbox
 from tqdm import trange
 
 torch.set_default_dtype(torch.float32)
@@ -61,42 +61,97 @@ def auto_opt(
     y0 = torch.tensor(y0, requires_grad=False)
     vx = torch.tensor(vx, requires_grad=False)
     vy = torch.tensor(vy, requires_grad=False)
-
-    Bf, Ef, xx, *_ = sim_bigbox(
-        ndelta,
+    (
+        x,
+        t,
+        xx,
+        yy,
+        delta,
+        in_sim,
+        Jloader,
+        dx,
+        dt,
+        maskb,
+        maskex,
+        maskey,
+        maskez,
+    ) = sim_setup(
+        ndelta=ndelta,
         res=resolution,
-        se=torch.tensor(0.0, device=device),
-        sb=torch.tensor(0.0, device=device),
-        vx=vx,
-        vy=vy,
-        alpha0=a,
+        se=softplus(se),
+        sb=softplus(se),
         x0=x0,
         y0=y0,
+        vx=vx,
+        vy=vy,
+        L=torch.tensor(8, device=device),
     )
-    _, xxs, *_ = grid_setup(ndelta, res=resolution, L=torch.tensor(2))
-    big0 = torch.argmin(torch.abs(xx[:, 0]))
-    small0 = torch.argmin(torch.abs(xxs[:, 0]))
-    Bf = Bf[big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :].to(
-        device
+    Bf, Ef, xx_big, *_ = sim_bigbox(
+        se,
+        se,
+        t,
+        xx,
+        yy,
+        ndelta,
+        torch.tensor(8),
+        Jloader,
+        dx,
+        dt,
+        maskb,
+        maskex,
+        maskey,
+        maskez,
     )
-    Ef = Ef[big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :].to(
-        device
+    (
+        x,
+        t,
+        xx,
+        yy,
+        delta,
+        in_sim,
+        Jloader,
+        dx,
+        dt,
+        maskb,
+        maskex,
+        maskey,
+        maskez,
+    ) = sim_setup(
+        ndelta=ndelta,
+        res=resolution,
+        se=softplus(se),
+        sb=softplus(se),
+        x0=x0,
+        y0=y0,
+        vx=vx,
+        vy=vy,
+        L=torch.tensor(2, device=device),
     )
+    big0 = torch.argmin(torch.abs(xx_big[:, 0]))
+    small0 = torch.argmin(torch.abs(xx[:, 0]))
+    Bf = Bf[big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :]
+    Ef = Ef[big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :]
+
     for i in trange(n_iter):
         a_opt.zero_grad()
         loss = sim(
-            alpha0=func(a),
-            ndelta=ndelta,
-            res=resolution,
-            se=softplus(se),
-            sb=softplus(se),
-            x0=x0,
-            y0=y0,
-            vx=vx,
-            vy=vy,
-            Ef=Ef,
-            Bf=Bf,
-            L=torch.tensor(2),
+            func(a),
+            se,
+            se,
+            xx,
+            yy,
+            ndelta,
+            torch.tensor(2, device=device),
+            in_sim,
+            Jloader,
+            dx,
+            dt,
+            maskb,
+            maskex,
+            maskey,
+            maskez,
+            Ef,
+            Bf,
         )
         loss.backward()
         l = loss.detach()
@@ -114,18 +169,23 @@ def auto_opt(
         ):
             a_opt.zero_grad()
             loss = sim(
-                alpha0=func(a),
-                ndelta=ndelta,
-                res=resolution,
-                se=softplus(se),
-                sb=softplus(se),
-                x0=x0,
-                y0=y0,
-                vx=vx,
-                vy=vy,
-                Ef=Ef,
-                Bf=Bf,
-                L=torch.tensor(2),
+                func(a),
+                se,
+                se,
+                xx,
+                yy,
+                ndelta,
+                torch.tensor(2, device=device),
+                in_sim,
+                Jloader,
+                dx,
+                dt,
+                maskb,
+                maskex,
+                maskey,
+                maskez,
+                Ef,
+                Bf,
             )
             loss.backward()
             l = loss.detach().item()
@@ -135,4 +195,12 @@ def auto_opt(
             loss_hist.append(l)
 
             a_opt.step()
-    return a_best.cpu(),se_best.cpu(), a_hist.cpu(),se_hist.cpu(), loss_hist.cpu(), Bf.cpu(), Ef.cpu()
+    return (
+        a_best.cpu(),
+        se_best.cpu(),
+        a_hist.cpu(),
+        se_hist.cpu(),
+        loss_hist.cpu(),
+        Bf.cpu(),
+        Ef.cpu(),
+    )

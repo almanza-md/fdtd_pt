@@ -1,3 +1,4 @@
+from typing import Tuple
 import torch
 
 torch.set_default_dtype(torch.float32)
@@ -187,3 +188,16 @@ def masks(arr):
     maskez[:, 0] = 0.0
     maskez[:, -1] = 0.0
     return maskb, maskex, maskey, maskez
+
+
+@torch.jit.script
+def field_arrs(arr: torch.Tensor) -> Tuple[torch.Tensor]:
+    e_x = torch.zeros_like(arr)
+    e_y = torch.zeros_like(arr)
+    e_zx = torch.zeros_like(arr)
+    e_zy = torch.zeros_like(arr)
+    b_x = torch.zeros_like(arr)
+    b_y = torch.zeros_like(arr)
+    b_zx = torch.zeros_like(arr)
+    b_zy = torch.zeros_like(arr)
+    return e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy

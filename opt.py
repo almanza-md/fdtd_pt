@@ -85,8 +85,8 @@ def auto_opt(
         L=torch.tensor(8, device=device),
     )
     Bf, Ef, xx_big, *_ = sim_bigbox(
-        se,
-        se,
+        se.detach(),
+        se.detach(),
         t,
         xx,
         yy,

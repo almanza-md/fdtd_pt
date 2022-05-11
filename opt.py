@@ -78,8 +78,6 @@ def auto_opt(
     ) = sim_setup(
         ndelta=ndelta,
         res=resolution,
-        se=softplus(se),
-        sb=softplus(se),
         x0=x0,
         y0=y0,
         vx=vx,
@@ -119,8 +117,6 @@ def auto_opt(
     ) = sim_setup(
         ndelta=ndelta,
         res=resolution,
-        se=softplus(se),
-        sb=softplus(se),
         x0=x0,
         y0=y0,
         vx=vx,

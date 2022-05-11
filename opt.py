@@ -125,8 +125,8 @@ def auto_opt(
     )
     big0 = torch.argmin(torch.abs(xx_big[:, 0]))
     small0 = torch.argmin(torch.abs(xx[:, 0]))
-    Bf = Bf[big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :]
-    Ef = Ef[big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :]
+    Bf = Bf[big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :].clone()
+    Ef = Ef[big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :].clone()
 
     for i in trange(n_iter):
         a_opt.zero_grad()

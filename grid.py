@@ -1,4 +1,3 @@
-from typing import Tuple
 import torch
 
 torch.set_default_dtype(torch.float32)
@@ -27,7 +26,7 @@ def grid_setup(ndelta, res, L):
     in_sim[:, -ndelta:] *= 0.0
     return x, xx, yy, delta, in_sim, dx
 
-
+@torch.jit.script
 def get_sigma(
     se,
     sb,
@@ -88,7 +87,7 @@ def get_CD(
     Cay = (1 - dt * sigmay / 2) / (1 + dt * sigmay / 2)
     return Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay
 
-
+@torch.jit.script
 def get_alpha(alpha0, arr):
     n = alpha0.shape[0]
     alpha = torch.ones_like(arr)

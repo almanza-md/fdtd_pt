@@ -54,7 +54,7 @@ def sim_setup(
     )
 
 
-# @torch.jit.script
+
 def sim(
     alpha0,
     se,

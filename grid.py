@@ -29,14 +29,14 @@ def grid_setup(ndelta, res, L):
 
 
 def get_sigma(
-    se: torch.Tensor,
-    sb: torch.Tensor,
-    xx: torch.Tensor,
-    yy: torch.Tensor,
-    ndelta: torch.Tensor,
-    L: torch.Tensor,
-    dt: torch.Tensor,
-) -> Tuple[torch.Tensor]:
+    se,
+    sb,
+    xx,
+    yy,
+    ndelta,
+    L,
+    dt,
+):
     device = ndelta.device
     sigmax = torch.zeros_like(xx)
     sigmastarx = torch.zeros_like(xx)
@@ -56,14 +56,14 @@ def get_sigma(
 
 @torch.jit.script
 def get_CD(
-    se: torch.Tensor,
-    sb: torch.Tensor,
-    xx: torch.Tensor,
-    yy: torch.Tensor,
-    ndelta: torch.Tensor,
-    L: torch.Tensor,
-    dt: torch.Tensor,
-) -> Tuple[torch.Tensor]:
+    se,
+    sb,
+    xx,
+    yy,
+    ndelta,
+    L,
+    dt,
+):
     device = ndelta.device
     sigmax = torch.zeros_like(xx)
     sigmastarx = torch.zeros_like(xx)

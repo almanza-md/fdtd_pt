@@ -191,7 +191,7 @@ def masks(arr):
 
 
 @torch.jit.script
-def field_arrs(arr: torch.Tensor) -> Tuple[torch.Tensor]:
+def field_arrs(arr):
     e_x = torch.zeros_like(arr)
     e_y = torch.zeros_like(arr)
     e_zx = torch.zeros_like(arr)

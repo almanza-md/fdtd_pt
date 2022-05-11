@@ -42,14 +42,14 @@ def get_sigma(
     sigmay = torch.zeros_like(xx)
     sigmastary = torch.zeros_like(xx)
     dx = xx[1, 0] - xx[0, 0]
-    sigmax[xx < -L] += se * torch.square((xx + L) / (6 * dx))[xx < -L]
-    sigmay[yy < -L] += se * torch.square((yy + L) / (6 * dx))[yy < -L]
-    sigmax[xx > L] += se * torch.square((xx - L) / (6 * dx))[xx > L]
-    sigmay[yy > L] += se * torch.square((yy - L) / (6 * dx))[yy > L]
-    sigmastarx[xx < -L] += sb * torch.square((xx + L) / (6 * dx))[xx < -L]
-    sigmastary[yy < -L] += sb * torch.square((yy + L) / (6 * dx))[yy < -L]
-    sigmastarx[xx > L] += sb * torch.square((xx - L) / (6 * dx))[xx > L]
-    sigmastary[yy > L] += sb * torch.square((yy - L) / (6 * dx))[yy > L]
+    sigmax[0:ndelta,:] += se * torch.square((xx + L) / (6 * dx))[0:ndelta,:]
+    sigmay[:,0:ndelta] += se * torch.square((yy + L) / (6 * dx))[:,0:ndelta]
+    sigmax[-ndelta:,:] += se * torch.square((xx - L) / (6 * dx))[-ndelta:,:]
+    sigmay[:,-ndelta:] += se * torch.square((yy - L) / (6 * dx))[:,-ndelta:]
+    sigmastarx[0:ndelta,:] += sb * torch.square((xx + L) / (6 * dx))[0:ndelta,:]
+    sigmastary[:,0:ndelta] += sb * torch.square((yy + L) / (6 * dx))[:,0:ndelta]
+    sigmastarx[-ndelta:,:] += sb * torch.square((xx - L) / (6 * dx))[-ndelta:,:]
+    sigmastary[:,-ndelta:] += sb * torch.square((yy - L) / (6 * dx))[:,-ndelta:]
     return sigmax, sigmay, sigmastarx, sigmastary
 
 
@@ -69,14 +69,14 @@ def get_CD(
     sigmay = torch.zeros_like(xx)
     sigmastary = torch.zeros_like(xx)
     dx = xx[1, 0] - xx[0, 0]
-    sigmax[xx < -L] += se * torch.square((xx + L) / (6 * dx))[xx < -L]
-    sigmay[yy < -L] += se * torch.square((yy + L) / (6 * dx))[yy < -L]
-    sigmax[xx > L] += se * torch.square((xx - L) / (6 * dx))[xx > L]
-    sigmay[yy > L] += se * torch.square((yy - L) / (6 * dx))[yy > L]
-    sigmastarx[xx < -L] += sb * torch.square((xx + L) / (6 * dx))[xx < -L]
-    sigmastary[yy < -L] += sb * torch.square((yy + L) / (6 * dx))[yy < -L]
-    sigmastarx[xx > L] += sb * torch.square((xx - L) / (6 * dx))[xx > L]
-    sigmastary[yy > L] += sb * torch.square((yy - L) / (6 * dx))[yy > L]
+    sigmax[0:ndelta,:] += se * torch.square((xx + L) / (6 * dx))[0:ndelta,:]
+    sigmay[:,0:ndelta] += se * torch.square((yy + L) / (6 * dx))[:,0:ndelta]
+    sigmax[-ndelta:,:] += se * torch.square((xx - L) / (6 * dx))[-ndelta:,:]
+    sigmay[:,-ndelta:] += se * torch.square((yy - L) / (6 * dx))[:,-ndelta:]
+    sigmastarx[0:ndelta,:] += sb * torch.square((xx + L) / (6 * dx))[0:ndelta,:]
+    sigmastary[:,0:ndelta] += sb * torch.square((yy + L) / (6 * dx))[:,0:ndelta]
+    sigmastarx[-ndelta:,:] += sb * torch.square((xx - L) / (6 * dx))[-ndelta:,:]
+    sigmastary[:,-ndelta:] += sb * torch.square((yy - L) / (6 * dx))[:,-ndelta:]
     Dbx = ((dt / 2) / (1 + dt * sigmastarx / 4)) / dx
     Dax = (1 - dt * sigmastarx / 4) / (1 + dt * sigmastarx / 4)
     Cbx = (dt / (1 + dt * sigmax / 2)) / dx

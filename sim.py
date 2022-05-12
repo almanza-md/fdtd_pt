@@ -51,6 +51,14 @@ def sim_setup(
         maskex,
         maskey,
         maskez,
+        e_x, 
+        e_y, 
+        e_zx, 
+        e_zy, 
+        b_x, 
+        b_y, 
+        b_zx, 
+        b_zy
     )
 
 

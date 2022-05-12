@@ -29,7 +29,7 @@ def sim_setup(
         J = torch.utils.data.TensorDataset(J_x, J_y, J_z)
         Jloader = torch.utils.data.DataLoader(
             J,
-            num_workers=2,
+            num_workers=1,
             pin_memory=True,
             prefetch_factor=8,
             persistent_workers=True,
@@ -54,7 +54,6 @@ def sim_setup(
     )
 
 
-
 def sim(
     alpha0,
     se,
@@ -76,16 +75,7 @@ def sim(
 ):
     (e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy) = field_arrs(xx)
 
-    (
-        Cax,
-        Cbx,
-        Dax,
-        Dbx,
-        Cay,
-        Cby,
-        Day,
-        Dby,
-    ) = get_CD(se, sb, xx, yy, ndelta, L, dt)
+    (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, L, dt)
     alpha = get_alpha(alpha0, xx)
     device = xx.device
     for J_x, J_y, J_z in Jloader:
@@ -149,16 +139,7 @@ def sim_EB(
 ):
     (e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy) = field_arrs(xx)
 
-    (
-        Cax,
-        Cbx,
-        Dax,
-        Dbx,
-        Cay,
-        Cby,
-        Day,
-        Dby,
-    ) = get_CD(se, sb, xx, yy, ndelta, L, dt)
+    (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, L, dt)
     alpha = get_alpha(alpha0, xx)
     device = xx.device
     Earr = torch.zeros((xx.shape[0], xx.shape[1], 3, t.shape[0]))
@@ -217,16 +198,7 @@ def sim_bigbox(
 ):
     (e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy) = field_arrs(xx)
 
-    (
-        Cax,
-        Cbx,
-        Dax,
-        Dbx,
-        Cay,
-        Cby,
-        Day,
-        Dby,
-    ) = get_CD(se, sb, xx, yy, ndelta, L, dt)
+    (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, L, dt)
     device = e_x.device
     Barr = torch.zeros((xx.shape[0], xx.shape[1], 3), device=device)
     Earr = torch.zeros((xx.shape[0], xx.shape[1], 3), device=device)

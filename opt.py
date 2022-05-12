@@ -43,7 +43,7 @@ def auto_opt(
             device=device,
         )
     se = torch.tensor(init[1], dtype=torch.float32, requires_grad=True, device=device)
-    a_opt = torch.optim.Adam((a, se), lr=0.4)
+    a_opt = torch.optim.Adam((a, se), lr=0.2)
     loss = 0.0
     if not loop:
         loss_hist = torch.zeros(n_iter, device=device)

@@ -75,6 +75,14 @@ def auto_opt(
         maskex,
         maskey,
         maskez,
+        e_x, 
+        e_y, 
+        e_zx, 
+        e_zy, 
+        b_x, 
+        b_y, 
+        b_zx, 
+        b_zy
     ) = sim_setup(
         ndelta=ndelta,
         res=resolution,
@@ -99,6 +107,14 @@ def auto_opt(
         maskex,
         maskey,
         maskez,
+        e_x, 
+        e_y, 
+        e_zx, 
+        e_zy, 
+        b_x, 
+        b_y, 
+        b_zx, 
+        b_zy
     )
     (
         x,
@@ -114,6 +130,14 @@ def auto_opt(
         maskex,
         maskey,
         maskez,
+        e_x, 
+        e_y, 
+        e_zx, 
+        e_zy, 
+        b_x, 
+        b_y, 
+        b_zx, 
+        b_zy
     ) = sim_setup(
         ndelta=ndelta,
         res=resolution,
@@ -146,6 +170,14 @@ def auto_opt(
             maskex,
             maskey,
             maskez,
+            e_x, 
+            e_y, 
+            e_zx, 
+            e_zy, 
+            b_x, 
+            b_y, 
+            b_zx, 
+            b_zy,
             Ef,
             Bf,
         )

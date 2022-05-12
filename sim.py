@@ -29,9 +29,9 @@ def sim_setup(
         J = torch.utils.data.TensorDataset(J_x, J_y, J_z)
         Jloader = torch.utils.data.DataLoader(
             J,
-            num_workers=1,
+            num_workers=4,
             pin_memory=True,
-            prefetch_factor=8,
+            #prefetch_factor=8,
             persistent_workers=True,
         )
 

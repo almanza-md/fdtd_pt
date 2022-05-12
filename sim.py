@@ -51,14 +51,14 @@ def sim_setup(
         maskex,
         maskey,
         maskez,
-        e_x, 
-        e_y, 
-        e_zx, 
-        e_zy, 
-        b_x, 
-        b_y, 
-        b_zx, 
-        b_zy
+        e_x,
+        e_y,
+        e_zx,
+        e_zy,
+        b_x,
+        b_y,
+        b_zx,
+        b_zy,
     )
 
 
@@ -78,18 +78,17 @@ def sim(
     maskex,
     maskey,
     maskez,
-    e_x, 
-    e_y, 
-    e_zx, 
-    e_zy, 
-    b_x, 
-    b_y, 
-    b_zx, 
+    e_x,
+    e_y,
+    e_zx,
+    e_zy,
+    b_x,
+    b_y,
+    b_zx,
     b_zy,
     Ef,
     Bf,
 ):
-    
 
     (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, L, dt)
     alpha = get_alpha(alpha0, xx)
@@ -121,9 +120,9 @@ def sim(
             maskey,
             maskez,
         )
-    Earr = torch.stack((e_x,e_y,e_zx+e_zy),dim=-1)
-    Barr = torch.stack((b_x,b_y,b_zx+b_zy),dim=-1)
-    u = torch.square(Earr - Ef) + torch.square(Barr-Bf)
+    Earr = torch.stack((e_x, e_y, e_zx + e_zy), dim=-1)
+    Barr = torch.stack((b_x, b_y, b_zx + b_zy), dim=-1)
+    u = torch.sum(torch.square(Earr - Ef) + torch.square(Barr - Bf), dim=-1)
     u *= in_sim
     Utot = torch.sum(u)
     return Utot
@@ -146,14 +145,14 @@ def sim_EB(
     maskex,
     maskey,
     maskez,
-    e_x, 
-    e_y, 
-    e_zx, 
-    e_zy, 
-    b_x, 
-    b_y, 
-    b_zx, 
-    b_zy
+    e_x,
+    e_y,
+    e_zx,
+    e_zy,
+    b_x,
+    b_y,
+    b_zx,
+    b_zy,
 ):
 
     (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, L, dt)
@@ -212,14 +211,14 @@ def sim_bigbox(
     maskex,
     maskey,
     maskez,
-    e_x, 
-    e_y, 
-    e_zx, 
-    e_zy, 
-    b_x, 
-    b_y, 
-    b_zx, 
-    b_zy
+    e_x,
+    e_y,
+    e_zx,
+    e_zy,
+    b_x,
+    b_y,
+    b_zx,
+    b_zy,
 ):
 
     (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, L, dt)

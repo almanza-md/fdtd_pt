@@ -27,7 +27,7 @@ def auto_opt(
     lr=0.1,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if init[0] == 0:
+    if type(init[0]) == float and init[0]==0:
         a = torch.linspace(
             start=alph0,
             end=-alph0,

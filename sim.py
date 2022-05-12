@@ -15,12 +15,13 @@ def sim_setup(
     x0,
     y0,
     L,
+    L0 = torch.tensor(2)
 ):
     with torch.no_grad():
         x, xx, yy, delta, in_sim, dx = grid_setup(ndelta, res, L)
         device = ndelta.device
         J_x, J_y, t = jfunc(
-            x.cpu(), vx, vy, L.cpu().to(torch.float32), x0=x0, y0=y0, delta=delta.cpu()
+            x.cpu(), vx, vy, L0.cpu().to(torch.float32), x0=x0, y0=y0, delta=delta.cpu()
         )
         t = t.to(device)
         dt = t[1] - t[0]

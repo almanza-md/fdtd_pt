@@ -24,6 +24,7 @@ def auto_opt(
     init=(0.0, 4 / 0.0315, 4 / 0.0315),
     n_iter=300,
     loop=False,
+    lr=0.1,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if init[0] == 0:
@@ -43,7 +44,7 @@ def auto_opt(
             device=device,
         )
     se = torch.tensor(init[1], dtype=torch.float32, requires_grad=True, device=device)
-    a_opt = torch.optim.Adam((a, se), lr=0.2)
+    a_opt = torch.optim.Adam((a, se), lr=lr)
     loss = 0.0
     if not loop:
         loss_hist = torch.zeros(n_iter, device=device)

@@ -26,6 +26,7 @@ def grid_setup(ndelta, res, L):
     in_sim[:, -ndelta:] *= 0.0
     return x, xx, yy, delta, in_sim, dx
 
+
 @torch.jit.script
 def get_sigma(
     se,
@@ -34,22 +35,24 @@ def get_sigma(
     yy,
     ndelta,
     L,
-    dt,
 ):
-    device = ndelta.device
     sigmax = torch.zeros_like(xx)
     sigmastarx = torch.zeros_like(xx)
     sigmay = torch.zeros_like(xx)
     sigmastary = torch.zeros_like(xx)
-    dx = xx[1, 0] - xx[0, 0]
-    sigmax[0:ndelta,:] += se * torch.square((xx + L) / (6 * dx))[0:ndelta,:]
-    sigmay[:,0:ndelta] += se * torch.square((yy + L) / (6 * dx))[:,0:ndelta]
-    sigmax[-ndelta:,:] += se * torch.square((xx - L) / (6 * dx))[-ndelta:,:]
-    sigmay[:,-ndelta:] += se * torch.square((yy - L) / (6 * dx))[:,-ndelta:]
-    sigmastarx[0:ndelta,:] += sb * torch.square((xx + L) / (6 * dx))[0:ndelta,:]
-    sigmastary[:,0:ndelta] += sb * torch.square((yy + L) / (6 * dx))[:,0:ndelta]
-    sigmastarx[-ndelta:,:] += sb * torch.square((xx - L) / (6 * dx))[-ndelta:,:]
-    sigmastary[:,-ndelta:] += sb * torch.square((yy - L) / (6 * dx))[:,-ndelta:]
+    if se.shape == torch.Size([]):
+        dx = xx[1, 0] - xx[0, 0]
+        sigmax[0:ndelta, :] += se * torch.square((xx + L) / (6 * dx))[0:ndelta, :]
+        sigmay[:, 0:ndelta] += se * torch.square((yy + L) / (6 * dx))[:, 0:ndelta]
+        sigmax[-ndelta:, :] += se * torch.square((xx - L) / (6 * dx))[-ndelta:, :]
+        sigmay[:, -ndelta:] += se * torch.square((yy - L) / (6 * dx))[:, -ndelta:]
+        sigmastarx[0:ndelta, :] += sb * torch.square((xx + L) / (6 * dx))[0:ndelta, :]
+        sigmastary[:, 0:ndelta] += sb * torch.square((yy + L) / (6 * dx))[:, 0:ndelta]
+        sigmastarx[-ndelta:, :] += sb * torch.square((xx - L) / (6 * dx))[-ndelta:, :]
+        sigmastary[:, -ndelta:] += sb * torch.square((yy - L) / (6 * dx))[:, -ndelta:]
+    else:
+        sigmax,sigmay=sig_helper(se,xx)
+        sigmastarx,sigmastary=sig_helper(sb,xx)
     return sigmax, sigmay, sigmastarx, sigmastary
 
 
@@ -63,19 +66,8 @@ def get_CD(
     L,
     dt,
 ):
-    sigmax = torch.zeros_like(xx)
-    sigmastarx = torch.zeros_like(xx)
-    sigmay = torch.zeros_like(xx)
-    sigmastary = torch.zeros_like(xx)
+    sigmax, sigmay, sigmastarx, sigmastary = get_sigma(se, sb, xx, yy, ndelta, L)
     dx = xx[1, 0] - xx[0, 0]
-    sigmax[0:ndelta,:] += se * torch.square((xx + L) / (6 * dx))[0:ndelta,:]
-    sigmay[:,0:ndelta] += se * torch.square((yy + L) / (6 * dx))[:,0:ndelta]
-    sigmax[-ndelta:,:] += se * torch.square((xx - L) / (6 * dx))[-ndelta:,:]
-    sigmay[:,-ndelta:] += se * torch.square((yy - L) / (6 * dx))[:,-ndelta:]
-    sigmastarx[0:ndelta,:] += sb * torch.square((xx + L) / (6 * dx))[0:ndelta,:]
-    sigmastary[:,0:ndelta] += sb * torch.square((yy + L) / (6 * dx))[:,0:ndelta]
-    sigmastarx[-ndelta:,:] += sb * torch.square((xx - L) / (6 * dx))[-ndelta:,:]
-    sigmastary[:,-ndelta:] += sb * torch.square((yy - L) / (6 * dx))[:,-ndelta:]
     Dbx = ((dt / 2) / (1 + dt * sigmastarx / 4)) / dx
     Dax = (1 - dt * sigmastarx / 4) / (1 + dt * sigmastarx / 4)
     Cbx = (dt / (1 + dt * sigmax / 2)) / dx
@@ -85,6 +77,7 @@ def get_CD(
     Cby = (dt / (1 + dt * sigmay / 2)) / dx
     Cay = (1 - dt * sigmay / 2) / (1 + dt * sigmay / 2)
     return Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay
+
 
 @torch.jit.script
 def get_alpha(alpha0, arr):
@@ -99,3 +92,15 @@ def get_alpha(alpha0, arr):
     alpha *= alphax
     alpha[n:-n] *= alphay
     return alpha
+
+@torch.jit.script
+def sig_helper(s0, arr):
+    n = s0.shape[0]
+    sigma = torch.zeros_like(arr)
+    sigmax = torch.zeros((arr.shape[0], 1), device=arr.device)
+    sigmay = torch.zeros((1, arr.shape[1]), device=arr.device)
+    sigmax[0:n, 0] += torch.flipud(s0)
+    sigmax[-n:, 0] += s0
+    sigmay[0, 0:n] += torch.flipud(s0)
+    sigmay[0, -n:] += s0
+    return sigma+sigmax,sigma+sigmay

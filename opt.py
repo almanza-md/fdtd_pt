@@ -25,6 +25,8 @@ def auto_opt(
     n_iter=300,
     loop=False,
     lr=0.1,
+    learn_se=False,
+    learn_sb=False
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if type(init[0]) == float and init[0]==0:
@@ -43,8 +45,16 @@ def auto_opt(
             device=device,
         )
         a.requires_grad = True
-    se = torch.tensor(init[1], dtype=torch.float32, requires_grad=True, device=device)
-    a_opt = torch.optim.Adam((a, se), lr=lr)
+    se = torch.tensor(init[1], dtype=torch.float32, requires_grad=learn_se, device=device)
+    params = [a]
+    if learn_se:
+        params.append(se)
+    if learn_sb:
+        sb = torch.tensor(init[2], dtype=torch.float32, requires_grad=learn_sb, device=device)
+        params.append(sb)
+    else:
+        sb=se
+    a_opt = torch.optim.Adam(params, lr=lr)
     loss = 0.0
     if not loop:
         loss_hist = torch.zeros(n_iter, device=device)
@@ -95,7 +105,7 @@ def auto_opt(
     )
     Bf, Ef, xx_big, *_ = sim_bigbox(
         se.detach(),
-        se.detach(),
+        sb.detach(),
         t,
         xx,
         yy,
@@ -158,7 +168,7 @@ def auto_opt(
         loss = sim(
             func(a),
             se,
-            se,
+            sb,
             xx,
             yy,
             ndelta,

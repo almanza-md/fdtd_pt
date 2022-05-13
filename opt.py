@@ -37,12 +37,12 @@ def auto_opt(
             device=device,
         )
     else:
-        a = torch.tensor(
-            init[0],
-            requires_grad=True,
+        a = init[0] * torch.ones(
+            ndelta,
             dtype=torch.float32,
             device=device,
         )
+        a.requires_grad = True
     se = torch.tensor(init[1], dtype=torch.float32, requires_grad=True, device=device)
     a_opt = torch.optim.Adam((a, se), lr=lr)
     loss = 0.0

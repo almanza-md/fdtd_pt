@@ -63,7 +63,6 @@ def get_CD(
     L,
     dt,
 ):
-    device = ndelta.device
     sigmax = torch.zeros_like(xx)
     sigmastarx = torch.zeros_like(xx)
     sigmay = torch.zeros_like(xx)

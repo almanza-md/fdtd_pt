@@ -34,6 +34,7 @@ def sim_setup(
             pin_memory=True,
             #prefetch_factor=8,
             persistent_workers=True,
+            batch_size=None
         )
 
         maskb, maskex, maskey, maskez = masks(xx)

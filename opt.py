@@ -173,8 +173,8 @@ def auto_opt(
         a_opt.zero_grad()
         loss = sim(
             func(a),
-            se,
-            sb,
+            softplus(se),
+            softplus(sb),
             xx,
             yy,
             ndelta,

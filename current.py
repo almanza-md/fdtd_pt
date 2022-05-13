@@ -1,5 +1,5 @@
 import torch
-from math import sqrt
+from math import sqrt,pow
 
 torch.set_default_dtype(torch.float32)
 
@@ -26,8 +26,8 @@ def jfunc(x, vx, vy, L, x0, y0, delta):
     c_shape = torch.exp(
         -1
         * (torch.square(xx - x0 - vx * tt) + torch.square(yy - y0 - vy * tt))
-        / torch.square(radius)
-    ) / (torch.square(radius * torch.pi))
+        / pow(radius,2)
+    ) / (pow(radius * torch.pi,2))
     c_shape[torch.isclose(c_shape, torch.zeros_like(c_shape))] *= 0
     c_weight = torch.ones_like(tt)
     c_weight[tt > tmax] = 0.0

@@ -7,7 +7,7 @@ torch.set_default_dtype(torch.float32)
 def jfunc(x, vx, vy, L, x0, y0, delta):
     dx = x[1] - x[0]
     v = torch.sqrt(torch.square(vx) + torch.square(vy))
-    radius = 1.75 * dx
+    radius = 0.055 # arbitrary
     theta = torch.atan2(vy, vx)
     L += delta
     if torch.isclose(vy, torch.zeros(1)):

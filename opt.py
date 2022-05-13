@@ -201,12 +201,12 @@ def auto_opt(
         loss.backward()
         l = loss.detach()
         if i == 0 or l < min(loss_hist):
-            a_best = a.detach()
-            se_best = se.detach()
-            sb_best = sb.detach()
-        a_hist.append(a.detach())
-        se_hist.append(se.detach())
-        sb_hist.append(sb.detach())
+            a_best = a.detach().cpu().clone()
+            se_best = se.detach().cpu().clone()
+            sb_best = sb.detach().cpu().clone()
+        a_hist.append(a.detach().cpu().clone())
+        se_hist.append(se.detach().cpu().clone())
+        sb_hist.append(sb.detach().cpu().clone())
         loss_hist.append(l)
 
         a_opt.step()

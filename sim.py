@@ -124,9 +124,11 @@ def sim(
         )
     Earr = torch.stack((e_x, e_y, e_zx + e_zy), dim=-1)
     Barr = torch.stack((b_x, b_y, b_zx + b_zy), dim=-1)
-    u = torch.sum(torch.square(Earr - Ef) + torch.square(Barr - Bf), dim=-1)
-    u *= in_sim
-    Utot = torch.sum(torch.sqrt(u))
+    Eerr = torch.nn.functional.l1_loss(Earr*in_sim,Ef*in_sim)
+    Berr = torch.nn.functional.l1_loss(Barr*in_sim,Bf*in_sim)
+    Utot = Eerr+Berr#torch.sum(torch.square(Earr - Ef) + torch.square(Barr - Bf), dim=-1)
+    #u *= in_sim
+    #Utot = torch.sum(u)
     return Utot
 
 

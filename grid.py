@@ -40,7 +40,7 @@ def get_sigma(
     sigmastarx = torch.zeros_like(xx)
     sigmay = torch.zeros_like(xx)
     sigmastary = torch.zeros_like(xx)
-    if se.shape == torch.Size([]):
+    if se.dim == 0:
         dx = xx[1, 0] - xx[0, 0]
         sigmax[0:ndelta, :] += se * torch.square((xx + L) / (6 * dx))[0:ndelta, :]
         sigmay[:, 0:ndelta] += se * torch.square((yy + L) / (6 * dx))[:, 0:ndelta]

@@ -207,7 +207,7 @@ def auto_opt(
         a_hist.append(a.detach())
         se_hist.append(se.detach())
         sb_hist.append(sb.detach())
-        loss_hist[i] = l
+        loss_hist.append(l)
 
         a_opt.step()
     if loop:

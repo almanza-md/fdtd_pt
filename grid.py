@@ -28,6 +28,19 @@ def grid_setup(ndelta, res, L):
 
 
 @torch.jit.script
+def sig_helper(s0, arr):
+    n = s0.shape[0]
+    sigma = torch.zeros_like(arr)
+    sigmax = torch.zeros((arr.shape[0], 1), device=arr.device)
+    sigmay = torch.zeros((1, arr.shape[1]), device=arr.device)
+    sigmax[0:n, 0] += torch.flipud(s0)
+    sigmax[-n:, 0] += s0
+    sigmay[0, 0:n] += torch.flipud(s0)
+    sigmay[0, -n:] += s0
+    return sigma + sigmax, sigma + sigmay
+
+
+@torch.jit.script
 def get_sigma(
     se,
     sb,
@@ -51,8 +64,8 @@ def get_sigma(
         sigmastarx[-ndelta:, :] += sb * torch.square((xx - L) / (6 * dx))[-ndelta:, :]
         sigmastary[:, -ndelta:] += sb * torch.square((yy - L) / (6 * dx))[:, -ndelta:]
     else:
-        sigmax,sigmay=sig_helper(se,xx)
-        sigmastarx,sigmastary=sig_helper(sb,xx)
+        sigmax, sigmay = sig_helper(se, xx)
+        sigmastarx, sigmastary = sig_helper(sb, xx)
     return sigmax, sigmay, sigmastarx, sigmastary
 
 
@@ -92,15 +105,3 @@ def get_alpha(alpha0, arr):
     alpha *= alphax
     alpha[n:-n] *= alphay
     return alpha
-
-@torch.jit.script
-def sig_helper(s0, arr):
-    n = s0.shape[0]
-    sigma = torch.zeros_like(arr)
-    sigmax = torch.zeros((arr.shape[0], 1), device=arr.device)
-    sigmay = torch.zeros((1, arr.shape[1]), device=arr.device)
-    sigmax[0:n, 0] += torch.flipud(s0)
-    sigmax[-n:, 0] += s0
-    sigmay[0, 0:n] += torch.flipud(s0)
-    sigmay[0, -n:] += s0
-    return sigma+sigmax,sigma+sigmay

@@ -26,10 +26,10 @@ def auto_opt(
     loop=False,
     lr=0.1,
     learn_se=False,
-    learn_sb=False
+    learn_sb=False,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if type(init[0]) == float and init[0]==0:
+    if type(init[0]) == float and init[0] == 0:
         a = torch.linspace(
             start=alph0,
             end=-alph0,
@@ -45,27 +45,29 @@ def auto_opt(
             device=device,
         )
         a.requires_grad = True
-    se = torch.tensor(init[1], dtype=torch.float32, requires_grad=learn_se, device=device)
+    se = torch.tensor(
+        init[1], dtype=torch.float32, requires_grad=learn_se, device=device
+    )
     params = [a]
     if learn_se:
         params.append(se)
     if learn_sb:
-        sb = torch.tensor(init[2], dtype=torch.float32, requires_grad=learn_sb, device=device)
+        sb = torch.tensor(
+            init[2], dtype=torch.float32, requires_grad=learn_sb, device=device
+        )
         params.append(sb)
     else:
-        sb=se
+        sb = se
     a_opt = torch.optim.Adam(params, lr=lr)
     loss = 0.0
-    if not loop:
-        loss_hist = torch.zeros(n_iter, device=device)
-        a_hist = torch.zeros((n_iter, a.shape[0]), device=device)
-        se_hist = torch.zeros(n_iter, device=device)
-    else:
-        loss_hist = []
-        a_hist = []
-        se_hist = []
+
+    loss_hist = []
+    a_hist = []
+    se_hist = []
+    sb_hist = []
     a_best = 0.0
     se_best = 0.0
+    sb_best = 0.0
     resolution = torch.tensor(resolution, requires_grad=False, device=device)
     ndelta = torch.tensor(ndelta, requires_grad=False, device=device)
     x0 = torch.tensor(x0, requires_grad=False)
@@ -86,14 +88,14 @@ def auto_opt(
         maskex,
         maskey,
         maskez,
-        e_x, 
-        e_y, 
-        e_zx, 
-        e_zy, 
-        b_x, 
-        b_y, 
-        b_zx, 
-        b_zy
+        e_x,
+        e_y,
+        e_zx,
+        e_zy,
+        b_x,
+        b_y,
+        b_zx,
+        b_zy,
     ) = sim_setup(
         ndelta=ndelta,
         res=resolution,
@@ -118,14 +120,14 @@ def auto_opt(
         maskex,
         maskey,
         maskez,
-        e_x, 
-        e_y, 
-        e_zx, 
-        e_zy, 
-        b_x, 
-        b_y, 
-        b_zx, 
-        b_zy
+        e_x,
+        e_y,
+        e_zx,
+        e_zy,
+        b_x,
+        b_y,
+        b_zx,
+        b_zy,
     )
     (
         x,
@@ -141,14 +143,14 @@ def auto_opt(
         maskex,
         maskey,
         maskez,
-        e_x, 
-        e_y, 
-        e_zx, 
-        e_zy, 
-        b_x, 
-        b_y, 
-        b_zx, 
-        b_zy
+        e_x,
+        e_y,
+        e_zx,
+        e_zy,
+        b_x,
+        b_y,
+        b_zx,
+        b_zy,
     ) = sim_setup(
         ndelta=ndelta,
         res=resolution,
@@ -160,8 +162,12 @@ def auto_opt(
     )
     big0 = torch.argmin(torch.abs(xx_big[:, 0]))
     small0 = torch.argmin(torch.abs(xx[:, 0]))
-    Bf = Bf[big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :].clone()
-    Ef = Ef[big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :].clone()
+    Bf = Bf[
+        big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :
+    ].clone()
+    Ef = Ef[
+        big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :
+    ].clone()
 
     for i in trange(n_iter):
         a_opt.zero_grad()
@@ -181,24 +187,26 @@ def auto_opt(
             maskex,
             maskey,
             maskez,
-            e_x, 
-            e_y, 
-            e_zx, 
-            e_zy, 
-            b_x, 
-            b_y, 
-            b_zx, 
+            e_x,
+            e_y,
+            e_zx,
+            e_zy,
+            b_x,
+            b_y,
+            b_zx,
             b_zy,
             Ef,
             Bf,
         )
         loss.backward()
         l = loss.detach()
-        if i == 0 or l < torch.min(loss_hist):
+        if i == 0 or l < min(loss_hist):
             a_best = a.detach()
             se_best = se.detach()
-        a_hist[i, :] = a.detach()
-        se_hist[i] = se.detach()
+            sb_best = sb.detach()
+        a_hist.append(a.detach())
+        se_hist.append(se.detach())
+        sb_hist.append(sb.detach())
         loss_hist[i] = l
 
         a_opt.step()
@@ -235,11 +243,8 @@ def auto_opt(
 
             a_opt.step()
     return (
-        a_best.cpu(),
-        se_best.cpu(),
-        a_hist.cpu(),
-        se_hist.cpu(),
-        loss_hist.cpu(),
+        {"alpha": a_best.cpu(), "sigma": se_best.cpu(), "sigmastar": sb_best.cpu()},
+        {"alpha": a_hist, "sigma": se_hist, "sigmastar": sb_hist, "loss": loss_hist},
         Bf.cpu(),
         Ef.cpu(),
     )

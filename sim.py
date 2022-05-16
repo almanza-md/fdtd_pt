@@ -15,14 +15,20 @@ def sim_setup(
     x0,
     y0,
     L,
-    L0 = torch.tensor(2)
+    L0 = torch.tensor(2),
+    use_delta = True
 ):
     with torch.no_grad():
         x, xx, yy, delta, in_sim, dx = grid_setup(ndelta, res, L)
         device = ndelta.device
-        J_x, J_y, t = jfunc(
-            x.cpu(), vx, vy, L0.cpu().to(torch.float32), x0=x0, y0=y0, delta=delta.cpu()
-        )
+        if use_delta:
+            J_x, J_y, t = jfunc(
+                x.cpu(), vx, vy, L0.cpu().to(torch.float32), x0=x0, y0=y0, delta=delta.cpu()
+            )
+        else:
+            J_x, J_y, t = jfunc(
+                x.cpu(), vx, vy, L0.cpu().to(torch.float32), x0=x0, y0=y0, delta=torch.tensor(0.)
+            )
         t = t.to(device)
         dt = t[1] - t[0]
         J_z = torch.zeros_like(J_x)

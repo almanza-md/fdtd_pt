@@ -34,7 +34,7 @@ def advance_b_zy(b_zy, e_x, Da, Db, mask):
 @torch.jit.script
 def advance_e_x(e_x, b_z, J_x, dx, Ca, Cb, mask):
     e_x = (
-        Cb * torch.roll(torch.diff(b_z, dim=1, append=mask[:, -1:]), 1, dims=1)
+        torch.roll(Cb *torch.diff(b_z, dim=1, append=mask[:, -1:]), 1, dims=1)
         + Ca * e_x
     )
     e_x *= mask
@@ -45,7 +45,7 @@ def advance_e_x(e_x, b_z, J_x, dx, Ca, Cb, mask):
 @torch.jit.script
 def advance_e_y(e_y, b_z, J_y, dy, Ca, Cb, mask):
     e_y = (
-        -1 * Cb * torch.roll(torch.diff(b_z, dim=0, append=mask[-1:, :]), 1, dims=0)
+        -1 * torch.roll(Cb * torch.diff(b_z, dim=0, append=mask[-1:, :]), 1, dims=0)
         + Ca * e_y
     )
     e_y *= mask
@@ -56,7 +56,7 @@ def advance_e_y(e_y, b_z, J_y, dy, Ca, Cb, mask):
 @torch.jit.script
 def advance_e_zx(e_zx, b_y, J_z, dx, Ca, Cb, mask):
     e_zx = (
-        Cb * torch.roll(torch.diff(b_y, dim=0, append=mask[-1:, :]), 1, dims=0)
+        torch.roll(Cb * torch.diff(b_y, dim=0, append=mask[-1:, :]), 1, dims=0)
         + Ca * e_zx
     )
     e_zx *= mask
@@ -67,7 +67,7 @@ def advance_e_zx(e_zx, b_y, J_z, dx, Ca, Cb, mask):
 @torch.jit.script
 def advance_e_zy(e_zy, b_x, J_z, dx, Ca, Cb, mask):
     e_zy = (
-        -1 * Cb * torch.roll(torch.diff(b_x, dim=1, append=mask[:, -1:]), 1, dims=1)
+        -1 * torch.roll(Cb * torch.diff(b_x, dim=1, append=mask[:, -1:]), 1, dims=1)
         + Ca * e_zy
     )
     e_zy *= mask

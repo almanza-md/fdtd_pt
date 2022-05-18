@@ -1,75 +1,59 @@
 import torch
-from .grid import grid_setup, get_alpha, get_sigma
-from .fields import masks, advance_flds
+from .grid import grid_setup, get_alpha, get_CD
+from .fields import masks, advance_flds, field_arrs
 from .current import jfunc
 
 torch.set_default_dtype(torch.float32)
 
 
-#@torch.jit.script
+# @torch.jit.script
 def sim_setup(
-    alpha0,
     ndelta,
     res,
-    se,
-    sb,
     vx,
     vy,
     x0,
     y0,
     L,
+    L0 = torch.tensor(2),
+    use_delta = True
 ):
     with torch.no_grad():
-        x, xx, yy, delta, e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = grid_setup(
-            ndelta, res, L
+        x, xx, yy, delta, in_sim, dx = grid_setup(ndelta, res, L)
+        device = ndelta.device
+        J_x, J_y, t = jfunc(
+            x.cpu(), vx, vy, L0.cpu().to(torch.float32), x0=x0, y0=y0, delta=delta.cpu(), pml_dep=use_delta
         )
-        device = e_x.device
-        dx = x[1] - x[0]
-        # nx = x.shape[0]
-        # ny = x.shape[0]
-        J_x, J_y, t = jfunc(x, vx, vy, L.to(torch.float32), x0=x0, y0=y0, delta=delta)
+        t = t.to(device)
         dt = t[1] - t[0]
         J_z = torch.zeros_like(J_x)
 
-        J = torch.utils.data.TensorDataset(J_x,J_y,J_z)
-        Jloader = torch.utils.data.DataLoader(J,num_workers=1,pin_memory=True,prefetch_factor=8)
+        J = torch.utils.data.TensorDataset(J_x, J_y, J_z)
+        Jloader = torch.utils.data.DataLoader(
+            J,
+            num_workers=4,
+            pin_memory=True,
+            #prefetch_factor=8,
+            persistent_workers=True,
+            batch_size=None
+        )
 
-        in_sim = torch.ones_like(e_x)
-        in_sim[0:ndelta, :] *= 0.0
-        in_sim[-ndelta:, :] *= 0.0
-        in_sim[:, 0:ndelta] *= 0.0
-        in_sim[:, -ndelta:] *= 0.0
-
-        maskb, maskex, maskey, maskez = masks(e_x)
-    sigmax, sigmay, sigmastarx, sigmastary = get_sigma(
-        se, sb, xx, yy, ndelta, L
-    )
-    alpha = get_alpha(alpha0, e_x)
-    dt = dt.to(device)
-    dx = dx.to(device)
-    Dbx = ((dt / 2) / (1 + dt * sigmastarx / 4)) / dx
-    #Dbx = Dbx.to(device)
-    Dax = (1 - dt * sigmastarx / 4) / (1 + dt * sigmastarx / 4)
-    #Dax = Dax.to(device)
-    Cbx = (dt / (1 + dt * sigmax / 2)) / dx
-    #Cbx = Cbx.to(device)
-    Cax = (1 - dt * sigmax / 2) / (1 + dt * sigmax / 2)
-    #Cax = Cax.to(device)
-    Dby = ((dt / 2) / (1 + dt * sigmastary / 4)) / dx
-    #Dby = Dby.to(device)
-    Day = (1 - dt * sigmastary / 4) / (1 + dt * sigmastary / 4)
-    #Day = Day.to(device)
-    Cby = (dt / (1 + dt * sigmay / 2)) / dx
-    #Cby = Cby.to(device)
-    Cay = (1 - dt * sigmay / 2) / (1 + dt * sigmay / 2)
-    #Cay = Cay.to(device)
-
+        maskb, maskex, maskey, maskez = masks(xx)
+        (e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy) = field_arrs(xx)
     return (
         x,
         t,
         xx,
         yy,
+        delta,
         in_sim,
+        Jloader,
+        dx,
+        dt,
+        maskb,
+        maskex,
+        maskey,
+        maskez,
         e_x,
         e_y,
         e_zx,
@@ -78,71 +62,41 @@ def sim_setup(
         b_y,
         b_zx,
         b_zy,
-        alpha,
-        Jloader,
-        dx,
-        Cax,
-        Cbx,
-        Dax,
-        Dbx,
-        Cay,
-        Cby,
-        Day,
-        Dby,
-        maskb,
-        maskex,
-        maskey,
-        maskez,
     )
 
 
-#@torch.jit.script
 def sim(
     alpha0,
-    ndelta,
-    res,
-    L,
     se,
     sb,
-    vx,
-    vy,
-    x0,
-    y0,
+    xx,
+    yy,
+    ndelta,
+    L,
+    in_sim,
+    Jloader,
+    dx,
+    dt,
+    maskb,
+    maskex,
+    maskey,
+    maskez,
+    e_x,
+    e_y,
+    e_zx,
+    e_zy,
+    b_x,
+    b_y,
+    b_zx,
+    b_zy,
     Ef,
     Bf,
 ):
-    (
-        x,
-        t,
-        xx,
-        yy,
-        in_sim,
-        e_x,
-        e_y,
-        e_zx,
-        e_zy,
-        b_x,
-        b_y,
-        b_zx,
-        b_zy,
-        alpha,
-        Jloader,
-        dx,
-        Cax,
-        Cbx,
-        Dax,
-        Dbx,
-        Cay,
-        Cby,
-        Day,
-        Dby,
-        maskb,
-        maskex,
-        maskey,
-        maskez,
-    ) = sim_setup(alpha0, ndelta, res, se, sb, vx, vy, x0, y0, L)
-    device = e_x.device
-    for J_x,J_y,J_z in Jloader:
+
+    (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, L, dt)
+    alpha = get_alpha(alpha0, xx)
+    device = xx.device
+    for J_x, J_y, J_z in Jloader:
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
             e_y,
@@ -152,9 +106,9 @@ def sim(
             b_y,
             b_zx,
             b_zy,
-            torch.squeeze(J_x.to(device)) * alpha,
-            torch.squeeze(J_y.to(device)) * alpha,
-            torch.squeeze(J_z.to(device)),
+            J_x.to(device) * alpha,
+            J_y.to(device) * alpha,
+            J_z.to(device),
             dx,
             Cax,
             Cbx,
@@ -169,67 +123,49 @@ def sim(
             maskey,
             maskez,
         )
-
-    u = (
-        torch.square(e_x - Ef[:, :, 0])
-        + torch.square(e_y - Ef[:, :, 1])
-        + torch.square(e_zx + e_zy - Ef[:, :, 2])
-        + torch.square(b_x - Bf[:, :, 0])
-        + torch.square(b_y - Bf[:, :, 1])
-        + torch.square(b_zx + b_zy - Bf[:, :, 2])
-    )
-    u *= in_sim
-    Utot = torch.sum(u)
+    Earr = torch.stack((e_x, e_y, e_zx + e_zy), dim=-1)
+    Barr = torch.stack((b_x, b_y, b_zx + b_zy), dim=-1)
+    Eerr = torch.nn.functional.l1_loss(Earr,Ef)
+    Berr = torch.nn.functional.l1_loss(Barr,Bf)
+    Utot = Eerr+Berr#torch.sum(torch.square(Earr - Ef) + torch.square(Barr - Bf), dim=-1)
+    #u *= in_sim
+    #Utot = torch.sum(u)
     return Utot
 
 
 def sim_EB(
-    ndelta,
-    res,
+    alpha0,
     se,
     sb,
-    vx,
-    vy,
-    alpha0,
-    x0,
-    y0,
+    t,
+    xx,
+    yy,
+    ndelta,
     L,
+    in_sim,
+    Jloader,
+    dx,
+    dt,
+    maskb,
+    maskex,
+    maskey,
+    maskez,
+    e_x,
+    e_y,
+    e_zx,
+    e_zy,
+    b_x,
+    b_y,
+    b_zx,
+    b_zy,
 ):
-    (
-        x,
-        t,
-        xx,
-        yy,
-        in_sim,
-        e_x,
-        e_y,
-        e_zx,
-        e_zy,
-        b_x,
-        b_y,
-        b_zx,
-        b_zy,
-        alpha,
-        Jloader,
-        dx,
-        Cax,
-        Cbx,
-        Dax,
-        Dbx,
-        Cay,
-        Cby,
-        Day,
-        Dby,
-        maskb,
-        maskex,
-        maskey,
-        maskez,
-    ) = sim_setup(alpha0, ndelta, res, se, sb, vx, vy, x0, y0, L)
-    nx = x.shape[0]
-    Barr = torch.zeros((nx, nx, 3, t.shape[0]))
-    Earr = torch.zeros((nx, nx, 3, t.shape[0]))
-    device = e_x.device
-    for i,(J_x,J_y,J_z) in enumerate(Jloader):
+
+    (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, L, dt)
+    alpha = get_alpha(alpha0, xx)
+    device = xx.device
+    Earr = torch.zeros((xx.shape[0], xx.shape[1], 3, t.shape[0]))
+    Barr = torch.zeros((xx.shape[0], xx.shape[1], 3, t.shape[0]))
+    for i, (J_x, J_y, J_z) in enumerate(Jloader):
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
             e_y,
@@ -239,9 +175,9 @@ def sim_EB(
             b_y,
             b_zx,
             b_zy,
-            torch.squeeze(J_x.to(device)) * alpha,
-            torch.squeeze(J_y.to(device)) * alpha,
-            torch.squeeze(J_z.to(device)),
+            J_x.to(device) * alpha,
+            J_y.to(device) * alpha,
+            J_z.to(device),
             dx,
             Cax,
             Cbx,
@@ -266,51 +202,36 @@ def sim_EB(
 
 
 def sim_bigbox(
-    ndelta,
-    res,
     se,
     sb,
-    vx,
-    vy,
-    alpha0,
-    x0,
-    y0,
+    t,
+    xx,
+    yy,
+    ndelta,
+    L,
+    Jloader,
+    dx,
+    dt,
+    maskb,
+    maskex,
+    maskey,
+    maskez,
+    e_x,
+    e_y,
+    e_zx,
+    e_zy,
+    b_x,
+    b_y,
+    b_zx,
+    b_zy,
 ):
-    (
-        x,
-        t,
-        xx,
-        yy,
-        in_sim,
-        e_x,
-        e_y,
-        e_zx,
-        e_zy,
-        b_x,
-        b_y,
-        b_zx,
-        b_zy,
-        alpha,
-        Jloader,
-        dx,
-        Cax,
-        Cbx,
-        Dax,
-        Dbx,
-        Cay,
-        Cby,
-        Day,
-        Dby,
-        maskb,
-        maskex,
-        maskey,
-        maskez,
-    ) = sim_setup(alpha0, ndelta, res, se, sb, vx, vy, x0, y0, L=torch.tensor(8))
-    nx = x.shape[0]
-    Barr = torch.zeros((nx, nx, 3))
-    Earr = torch.zeros((nx, nx, 3))
+
+    (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, L, dt)
     device = e_x.device
-    for J_x,J_y,J_z in Jloader:
+    Barr = torch.zeros((xx.shape[0], xx.shape[1], 3), device=device)
+    Earr = torch.zeros((xx.shape[0], xx.shape[1], 3), device=device)
+
+    for J_x, J_y, J_z in Jloader:
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
             e_y,
@@ -320,9 +241,9 @@ def sim_bigbox(
             b_y,
             b_zx,
             b_zy,
-            torch.squeeze(J_x.to(device)),
-            torch.squeeze(J_y.to(device)),
-            torch.squeeze(J_z.to(device)),
+            J_x.to(device),
+            J_y.to(device),
+            J_z.to(device),
             dx,
             Cax,
             Cbx,
@@ -344,4 +265,4 @@ def sim_bigbox(
     Earr[..., 1] = e_y
     Earr[..., 2] = e_zx + e_zy
 
-    return Barr.cpu(), Earr.cpu(), xx.cpu(), yy.cpu(), t.cpu()
+    return Barr, Earr, xx.cpu(), yy.cpu(), t.cpu()

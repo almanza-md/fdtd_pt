@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from torch.nn.functional import softplus
 from .grid import grid_setup
-from .sim import sim, sim_bigbox
+from .sim import sim_setup, sim, sim_bigbox
 from tqdm import trange
 
 torch.set_default_dtype(torch.float32)
@@ -24,9 +24,12 @@ def auto_opt(
     init=(0.0, 4 / 0.0315, 4 / 0.0315),
     n_iter=300,
     loop=False,
+    lr=0.1,
+    learn_se=False,
+    learn_sb=False,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if init[0] == 0:
+    if type(init[0]) == float and init[0] == 0:
         a = torch.linspace(
             start=alph0,
             end=-alph0,
@@ -36,76 +39,175 @@ def auto_opt(
             device=device,
         )
     else:
-        a = torch.tensor(
-            init[0],
-            requires_grad=True,
+        a = init[0] * torch.ones(
+            ndelta,
             dtype=torch.float32,
             device=device,
         )
-    se = torch.tensor(init[1], dtype=torch.float32, requires_grad=True, device=device)
-    a_opt = torch.optim.Adam((a, se), lr=0.4)
-    loss = 0.0
-    if not loop:
-        loss_hist = torch.zeros(n_iter, device=device)
-        a_hist = torch.zeros((n_iter, a.shape[0]), device=device)
-        se_hist = torch.zeros(n_iter, device=device)
+        a.requires_grad = True
+    se = torch.tensor(
+        init[1], dtype=torch.float32, requires_grad=learn_se, device=device
+    )
+    params = [a]
+    if learn_se:
+        params.append(se)
+    if learn_sb:
+        sb = torch.tensor(
+            init[2], dtype=torch.float32, requires_grad=learn_sb, device=device
+        )
+        params.append(sb)
     else:
-        loss_hist = []
-        a_hist = []
-        se_hist = []
+        sb = se
+    a_opt = torch.optim.Adam(params, lr=lr)
+    loss = 0.0
+
+    loss_hist = []
+    a_hist = []
+    se_hist = []
+    sb_hist = []
     a_best = 0.0
     se_best = 0.0
+    sb_best = 0.0
     resolution = torch.tensor(resolution, requires_grad=False, device=device)
     ndelta = torch.tensor(ndelta, requires_grad=False, device=device)
     x0 = torch.tensor(x0, requires_grad=False)
     y0 = torch.tensor(y0, requires_grad=False)
     vx = torch.tensor(vx, requires_grad=False)
     vy = torch.tensor(vy, requires_grad=False)
-
-    Bf, Ef, xx, *_ = sim_bigbox(
-        ndelta,
+    (
+        x,
+        t,
+        xx,
+        yy,
+        delta,
+        in_sim,
+        Jloader,
+        dx,
+        dt,
+        maskb,
+        maskex,
+        maskey,
+        maskez,
+        e_x,
+        e_y,
+        e_zx,
+        e_zy,
+        b_x,
+        b_y,
+        b_zx,
+        b_zy,
+    ) = sim_setup(
+        ndelta=ndelta,
         res=resolution,
-        se=torch.tensor(0.0, device=device),
-        sb=torch.tensor(0.0, device=device),
-        vx=vx,
-        vy=vy,
-        alpha0=a,
         x0=x0,
         y0=y0,
+        vx=vx,
+        vy=vy,
+        L=torch.tensor(8, device=device),
     )
-    _, xxs, *_ = grid_setup(ndelta, res=resolution, L=torch.tensor(2))
-    big0 = torch.argmin(torch.abs(xx[:, 0]))
-    small0 = torch.argmin(torch.abs(xxs[:, 0]))
-    Bf = Bf[big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :].to(
-        device
+    Bf, Ef, xx_big, *_ = sim_bigbox(
+        se.detach(),
+        sb.detach(),
+        t,
+        xx,
+        yy,
+        ndelta,
+        torch.tensor(8),
+        Jloader,
+        dx,
+        dt,
+        maskb,
+        maskex,
+        maskey,
+        maskez,
+        e_x,
+        e_y,
+        e_zx,
+        e_zy,
+        b_x,
+        b_y,
+        b_zx,
+        b_zy,
     )
-    Ef = Ef[big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :].to(
-        device
+    (
+        x,
+        t,
+        xx,
+        yy,
+        delta,
+        in_sim,
+        Jloader,
+        dx,
+        dt,
+        maskb,
+        maskex,
+        maskey,
+        maskez,
+        e_x,
+        e_y,
+        e_zx,
+        e_zy,
+        b_x,
+        b_y,
+        b_zx,
+        b_zy,
+    ) = sim_setup(
+        ndelta=ndelta,
+        res=resolution,
+        x0=x0,
+        y0=y0,
+        vx=vx,
+        vy=vy,
+        L=torch.tensor(2, device=device),
     )
+    big0 = torch.argmin(torch.abs(xx_big[:, 0]))
+    small0 = torch.argmin(torch.abs(xx[:, 0]))
+    Bf = Bf[
+        big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :
+    ].clone()
+    Ef = Ef[
+        big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :
+    ].clone()
+
     for i in trange(n_iter):
         a_opt.zero_grad()
         loss = sim(
-            alpha0=func(a),
-            ndelta=ndelta,
-            res=resolution,
-            se=softplus(se),
-            sb=softplus(se),
-            x0=x0,
-            y0=y0,
-            vx=vx,
-            vy=vy,
-            Ef=Ef,
-            Bf=Bf,
-            L=torch.tensor(2),
+            func(a),
+            softplus(se),
+            softplus(sb),
+            xx,
+            yy,
+            ndelta,
+            torch.tensor(2, device=device),
+            in_sim,
+            Jloader,
+            dx,
+            dt,
+            maskb,
+            maskex,
+            maskey,
+            maskez,
+            e_x,
+            e_y,
+            e_zx,
+            e_zy,
+            b_x,
+            b_y,
+            b_zx,
+            b_zy,
+            Ef,
+            Bf,
         )
         loss.backward()
         l = loss.detach()
-        if i == 0 or l < torch.min(loss_hist):
-            a_best = a.detach()
-            se_best = se.detach()
-        a_hist[i, :] = a.detach()
-        se_hist[i] = se.detach()
-        loss_hist[i] = l
+        if i == 0 or l < min(loss_hist):
+            a_best = a.detach().cpu().clone()
+            se_best = se.detach().cpu().clone()
+            sb_best = sb.detach().cpu().clone()
+        a_hist.append(a.detach().cpu().clone())
+        se_hist.append(se.detach().cpu().clone())
+        sb_hist.append(sb.detach().cpu().clone())
+        loss_hist.append(l)
 
         a_opt.step()
     if loop:
@@ -114,18 +216,23 @@ def auto_opt(
         ):
             a_opt.zero_grad()
             loss = sim(
-                alpha0=func(a),
-                ndelta=ndelta,
-                res=resolution,
-                se=softplus(se),
-                sb=softplus(se),
-                x0=x0,
-                y0=y0,
-                vx=vx,
-                vy=vy,
-                Ef=Ef,
-                Bf=Bf,
-                L=torch.tensor(2),
+                func(a),
+                se,
+                se,
+                xx,
+                yy,
+                ndelta,
+                torch.tensor(2, device=device),
+                in_sim,
+                Jloader,
+                dx,
+                dt,
+                maskb,
+                maskex,
+                maskey,
+                maskez,
+                Ef,
+                Bf,
             )
             loss.backward()
             l = loss.detach().item()
@@ -135,4 +242,9 @@ def auto_opt(
             loss_hist.append(l)
 
             a_opt.step()
-    return a_best.cpu(),se_best.cpu(), a_hist.cpu(),se_hist.cpu(), loss_hist.cpu(), Bf.cpu(), Ef.cpu()
+    return (
+        {"alpha": a_best.cpu(), "sigma": se_best.cpu(), "sigmastar": sb_best.cpu()},
+        {"alpha": a_hist, "sigma": se_hist, "sigmastar": sb_hist, "loss": loss_hist},
+        Bf.cpu(),
+        Ef.cpu(),
+    )

@@ -4,7 +4,7 @@ from math import sqrt,pow
 torch.set_default_dtype(torch.float32)
 
 
-def jfunc(x, vx, vy, L, x0, y0, delta, pml_dep=True):
+def jfunc(x, vx, vy, L, x0, y0, delta, pml_dep=True, big_box=False):
     dx = x[1] - x[0]
     v = torch.sqrt(torch.square(vx) + torch.square(vy))
     radius = 0.055 # arbitrary
@@ -36,7 +36,9 @@ def jfunc(x, vx, vy, L, x0, y0, delta, pml_dep=True):
     ) / (pow(radius * torch.pi,2))
     c_shape[torch.isclose(c_shape, torch.zeros_like(c_shape))] *= 0
     c_weight = torch.ones_like(tt)
-    if pml_dep:
+    if big_box:
+        c_weight[tt > tmax] = 0.0
+    elif pml_dep:
         c_weight[tt > jtmax] = 0.0
     else:
         c_weight[tt > nodep_tmax] = 0.0

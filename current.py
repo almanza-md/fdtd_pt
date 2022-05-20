@@ -34,7 +34,7 @@ def jfunc(x, vx, vy, L, x0, y0, delta, pml_dep=True, big_box=False):
         * (torch.square(xx - x0 - vx * tt) + torch.square(yy - y0 - vy * tt))
         / pow(radius,2)
     ) / (pow(radius * torch.pi,2))
-    c_shape[torch.isclose(c_shape, torch.zeros_like(c_shape),atol=1e-10)] *= 0
+    #c_shape[torch.isclose(c_shape, torch.zeros_like(c_shape),atol=1e-10)] *= 0
     c_weight = torch.ones_like(tt)
     if big_box:
         c_weight[tt > tmax] = 0.0

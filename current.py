@@ -109,8 +109,7 @@ def jfunc_dep(x, vx, vy, L, x0, y0, delta, pml_dep=True, big_box=False):
     t = torch.arange(start=0, end=tmax, step=dt)
     tt, xx, yy = torch.meshgrid(t, x, x, indexing="ij")
     c_weight = torch.ones_like(tt)
-    print(jtmax)
-    print(torch.argmin(torch.abs(t-jtmax)))
+    
     if big_box:
         c_weight[tt > tmax] = 0.0
         t0 = tmax

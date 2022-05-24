@@ -1,7 +1,7 @@
 import torch
 from .grid import grid_setup, get_alpha, get_CD
 from .fields import masks, advance_flds, field_arrs
-from .current import jfunc
+from .current import jfunc_dep
 
 torch.set_default_dtype(torch.float32)
 
@@ -21,7 +21,7 @@ def sim_setup(
     with torch.no_grad():
         x, xx, yy, delta, in_sim, dx = grid_setup(ndelta, res, L)
         device = ndelta.device
-        J_x, J_y, t = jfunc(
+        J_x, J_y, t = jfunc_dep(
             x.cpu(), vx, vy, L0.cpu().to(torch.float32), x0=x0, y0=y0, delta=delta.cpu(), pml_dep=use_delta, big_box=L>2
         )
         t = t.to(device)

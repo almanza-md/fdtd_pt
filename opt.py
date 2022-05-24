@@ -72,8 +72,8 @@ def auto_opt(
     ndelta = torch.tensor(ndelta, requires_grad=False, device=device)
     x0 = torch.tensor(x0, requires_grad=False)
     y0 = torch.tensor(y0, requires_grad=False)
-    vx = torch.tensor(vx, requires_grad=False)
-    vy = torch.tensor(vy, requires_grad=False)
+    #vx = torch.tensor(vx, requires_grad=False)
+    #vy = torch.tensor(vy, requires_grad=False)
     (
         x,
         t,

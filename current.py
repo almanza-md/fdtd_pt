@@ -123,6 +123,8 @@ def jfunc_dep(x, vx, vy, L, x0, y0, delta, pml_dep=True, big_box=False):
     poslist = [torch.tensor([[x0+vel[0,0]*tp,y0+vel[0,1]*tp]]) for tp in t]
     Jlist = [current_dep(pos,vel,xx[0,...],yy[0,...]) if tp<t0 else current_dep(pos,0*vel,xx[0,...],yy[0,...]) for (pos,tp) in zip(poslist,t)]
     Jtensor = torch.stack(Jlist,dim=0)
+    Jtensor /= torch.max(Jtensor)
+    Jtensor *= 4*np.pi
     Jx,Jy,_= [torch.clone(torch.squeeze(jj)) for jj in torch.split(Jtensor,1,dim=-1)]
     
     Jx *= c_weight

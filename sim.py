@@ -21,12 +21,12 @@ def sim_setup(
     with torch.no_grad():
         x, xx, yy, delta, in_sim, dx = grid_setup(ndelta, res, L)
         device = ndelta.device
-        J_x, J_y, t = jfunc_dep(
+        J_x, J_y,J_z, t = jfunc_dep(
             x.cpu(), vx, vy, L0.cpu().to(torch.float32), x0=x0, y0=y0, delta=delta.cpu(), pml_dep=use_delta, big_box=L>2
         )
         t = t.to(device)
         dt = t[1] - t[0]
-        J_z = torch.zeros_like(J_x)
+        #J_z = torch.zeros_like(J_x)
 
         J = torch.utils.data.TensorDataset(J_x, J_y, J_z)
         Jloader = torch.utils.data.DataLoader(

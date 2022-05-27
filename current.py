@@ -229,7 +229,7 @@ def current_dep_old(pos, vel, xx, yy):
     return J
 
 
-def jfunc_dep(x, vx, vy, L, x0, y0, delta, pml_dep=True, big_box=False,smooth=True,filter_n=1):
+def jfunc_dep(x, vx, vy, L, x0, y0, delta, pml_dep=True, big_box=False,smooth=False,filter_n=1):
     dx = x[1] - x[0]
     # v = torch.sqrt(torch.square(vx) + torch.square(vy))
     v = sqrt((vx) ** 2 + (vy) ** 2)

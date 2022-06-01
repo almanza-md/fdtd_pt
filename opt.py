@@ -4,6 +4,7 @@ from torch.nn.functional import softplus
 from .grid import grid_setup
 from .sim import sim_setup, sim, sim_bigbox
 from tqdm import trange
+from math import sqrt
 
 torch.set_default_dtype(torch.float32)
 alph0 = torch.atanh(torch.tensor(0.9999))
@@ -103,31 +104,63 @@ def auto_opt(
         y0=y0,
         vx=vx,
         vy=vy,
-        L=torch.tensor(8, device=device),
+        L=torch.tensor(2, device=device),
+    )
+    big_L = float(t[-1]*sqrt((vx)**2 + (vy)**2))
+    (
+        xb,
+        tb,
+        xxb,
+        yyb,
+        deltab,
+        in_simb,
+        Jloaderb,
+        dxb,
+        dtb,
+        maskbb,
+        maskexb,
+        maskeyb,
+        maskezb,
+        e_xb,
+        e_yb,
+        e_zxb,
+        e_zyb,
+        b_xb,
+        b_yb,
+        b_zxb,
+        b_zyb,
+    ) = sim_setup(
+        ndelta=ndelta,
+        res=resolution,
+        x0=x0,
+        y0=y0,
+        vx=vx,
+        vy=vy,
+        L=torch.tensor(big_L, device=device),
     )
     Bf, Ef, xx_big, *_ = sim_bigbox(
         se.detach(),
         sb.detach(),
-        t,
-        xx,
-        yy,
+        tb,
+        xxb,
+        yyb,
         ndelta,
-        torch.tensor(8),
-        Jloader,
-        dx,
-        dt,
-        maskb,
-        maskex,
-        maskey,
-        maskez,
-        e_x,
-        e_y,
-        e_zx,
-        e_zy,
-        b_x,
-        b_y,
-        b_zx,
-        b_zy,
+        torch.tensor(big_L),
+        Jloaderb,
+        dxb,
+        dtb,
+        maskbb,
+        maskexb,
+        maskeyb,
+        maskezb,
+        e_xb,
+        e_yb,
+        e_zxb,
+        e_zyb,
+        b_xb,
+        b_yb,
+        b_zxb,
+        b_zyb,
     )
     (
         x,
@@ -247,4 +280,5 @@ def auto_opt(
         {"alpha": a_hist, "sigma": se_hist, "sigmastar": sb_hist, "loss": loss_hist},
         Bf.cpu(),
         Ef.cpu(),
+        big_L
     )

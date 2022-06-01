@@ -271,9 +271,9 @@ def jfunc_dep(x, vx, vy, L, x0, y0, delta, pml_dep=True, big_box=False,smooth=Fa
     current_dep(poslist[0], vel, xx[0, ...], yy[0, ...], init=True)]
     for i, tp in zip(range(2, len(t)), t[:-1]):
         if tp < t0:
-            Jlist.append(current_dep(poslist[i-1], vel, xx[0, ...], yy[0, ...],old_pos=poslist[i-2]))
+            Jlist.append(current_dep(poslist[i-1], vlist[i-1:i], xx[0, ...], yy[0, ...],old_pos=poslist[i-2]))
         else:
-            Jlist.append(current_dep(poslist[i-1], 0 * vel, xx[0, ...], yy[0, ...],old_pos=poslist[i-2]))
+            Jlist.append(current_dep(poslist[i-1], 0 * vlist[i-1:i], xx[0, ...], yy[0, ...],old_pos=poslist[i-2]))
 
     Jtensor = torch.stack(Jlist, dim=0)
     filter_range = torch.linspace(-filter_n,filter_n,2*filter_n+1)

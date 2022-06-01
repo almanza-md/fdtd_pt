@@ -107,7 +107,7 @@ def auto_opt(
         vy=vy,
         L=torch.tensor(2, device=device), smooth=smooth_current,filter_n=filter_n
     )
-    big_L = float(t[-1])#*sqrt((vx)**2 + (vy)**2))
+    big_L = round(t[-1])#*sqrt((vx)**2 + (vy)**2))
     (
         xb,
         tb,

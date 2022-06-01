@@ -28,6 +28,7 @@ def auto_opt(
     lr=0.1,
     learn_se=False,
     learn_sb=False,
+    smooth_current=False,filter_n=1
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if type(init[0]) == float and init[0] == 0:
@@ -104,7 +105,7 @@ def auto_opt(
         y0=y0,
         vx=vx,
         vy=vy,
-        L=torch.tensor(2, device=device),
+        L=torch.tensor(2, device=device), smooth=smooth_current,filter_n=filter_n
     )
     big_L = float(t[-1])#*sqrt((vx)**2 + (vy)**2))
     (
@@ -136,7 +137,7 @@ def auto_opt(
         y0=y0,
         vx=vx,
         vy=vy,
-        L=torch.tensor(big_L, device=device),
+        L=torch.tensor(big_L, device=device), smooth=smooth_current,filter_n=filter_n
     )
     Bf, Ef, xx_big, *_ = sim_bigbox(
         se.detach(),
@@ -161,37 +162,6 @@ def auto_opt(
         b_yb,
         b_zxb,
         b_zyb,
-    )
-    (
-        x,
-        t,
-        xx,
-        yy,
-        delta,
-        in_sim,
-        Jloader,
-        dx,
-        dt,
-        maskb,
-        maskex,
-        maskey,
-        maskez,
-        e_x,
-        e_y,
-        e_zx,
-        e_zy,
-        b_x,
-        b_y,
-        b_zx,
-        b_zy,
-    ) = sim_setup(
-        ndelta=ndelta,
-        res=resolution,
-        x0=x0,
-        y0=y0,
-        vx=vx,
-        vy=vy,
-        L=torch.tensor(2, device=device),
     )
     big0 = torch.argmin(torch.abs(xx_big[:, 0]))
     small0 = torch.argmin(torch.abs(xx[:, 0]))

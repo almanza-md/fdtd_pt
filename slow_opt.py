@@ -24,7 +24,7 @@ parser.add_argument('--res', type=int,default=32)
 parser.add_argument('--x0', type=float,default=-1.0)
 parser.add_argument('--niter', type=int,default=10000)
 parser.add_argument('--lr', type=float,default=0.01)
-args = parser.parse_args(sys.argv)
+args = parser.parse_args()
 
 n=args.cells
 init = (0.,10.,10.)

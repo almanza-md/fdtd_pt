@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser(description='Optimize current absorption profil
 parser.add_argument('--cells', type=int, default=8)
 parser.add_argument('--learnse', action='store_false')
 parser.add_argument('--learnsb', action='store_true')
-parser.add_argument('--speed', type=float,default=0.3)
+parser.add_argument('--gamma', type=float,default=10)
 parser.add_argument('--smooth',action='store_true')
 parser.add_argument('--filtw', type=int,default=4)
 parser.add_argument('--res', type=int,default=32)
@@ -29,14 +29,14 @@ args = parser.parse_args()
 n=args.cells
 init = (0.,10.,10.)
 theta = 0
-v = args.speed
+v = sqrt(args.gamma**2 - 1)/args.gamma
 vx = v*cos(theta)
 vy = v*sin(theta)
 smooth=args.smooth
 filter_n=args.filtw
 
 best,hist,Bf,Ef,big_L = auto_opt(args.res,n,vx=vx,vy=vy,x0=args.x0,n_iter=args.niter,init=init,learn_se=args.learnse,learn_sb=args.learnse,lr=args.lr,smooth_current=smooth,filter_n=filter_n)
-strmod = 'slow'
+strmod = 'fast'
 if smooth:
     strmod += f'_smooth_{filter_n}'
 if args.learnsb:

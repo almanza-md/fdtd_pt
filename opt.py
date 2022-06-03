@@ -31,22 +31,25 @@ def auto_opt(
     smooth_current=False,filter_n=1
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if type(init[0]) == float and init[0] == 0:
-        a = torch.linspace(
-            start=alph0,
-            end=-alph0,
-            steps=ndelta,
-            requires_grad=True,
-            dtype=torch.float32,
-            device=device,
-        )
+    if type(init[0]) == float:
+        if init[0] == 0:
+            a = torch.linspace(
+                start=alph0,
+                end=-alph0,
+                steps=ndelta,
+                requires_grad=True,
+                dtype=torch.float32,
+                device=device,
+            )
+        else:
+            a = init[0] * torch.ones(
+                ndelta,
+                dtype=torch.float32,
+                device=device,
+            )
+            a.requires_grad = True
     else:
-        a = init[0] * torch.ones(
-            ndelta,
-            dtype=torch.float32,
-            device=device,
-        )
-        a.requires_grad = True
+        a = torch.tensor(init[0],dtype=torch.float32,requires_grad=True,device=device)
     se = torch.tensor(
         init[1], dtype=torch.float32, requires_grad=learn_se, device=device
     )

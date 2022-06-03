@@ -12,7 +12,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath("../"))
-from fdtd_pt.opt import auto_opt
+from fdtd_pt.opt import auto_opt,func
 from tqdm import trange
 
 parser = argparse.ArgumentParser(description="Optimize current absorption profile")

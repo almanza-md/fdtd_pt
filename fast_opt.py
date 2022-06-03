@@ -45,8 +45,10 @@ try:
     sigmastar = softplus(
         torch.load(f"/mnt/PAULO/mark/pml/2D/sigmastar_0_{strmod}_{n}.pyt")
     )
+    print('Found previous profiles')
     init = (alpha.numpy(), float(sigma), float(sigmastar))
 except FileNotFoundError:
+    print('No previous profiles')
     init = (0.0, 10.0, 10.0)
 theta = 0
 v = sqrt(args.gamma**2 - 1) / args.gamma

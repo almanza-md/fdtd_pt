@@ -219,7 +219,7 @@ def auto_opt(
         loss_hist.append(l)
 
         a_opt.step()
-        lr_sched.step()
+        lr_sched.step(loss)
     if loop:
         while not np.isclose(
             np.log(np.mean(loss_hist[-25:])) - np.log(np.mean(loss_hist[-100:-75])), 0.0

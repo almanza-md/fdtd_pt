@@ -64,6 +64,9 @@ def auto_opt(
     else:
         sb = se
     a_opt = torch.optim.Adam(params, lr=lr)
+
+    lr_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(a_opt,factor=0.5)
+
     loss = 0.0
 
     loss_hist = []
@@ -216,6 +219,7 @@ def auto_opt(
         loss_hist.append(l)
 
         a_opt.step()
+        lr_sched.step()
     if loop:
         while not np.isclose(
             np.log(np.mean(loss_hist[-25:])) - np.log(np.mean(loss_hist[-100:-75])), 0.0

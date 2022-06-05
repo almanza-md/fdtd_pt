@@ -26,7 +26,9 @@ parser.add_argument("--res", type=int, default=32)
 parser.add_argument("--x0", type=float, default=-1.0)
 parser.add_argument("--niter", type=int, default=10000)
 parser.add_argument("--lr", type=float, default=0.01)
+parser.add_argument("--savedir", default='/mnt/PAULO/mark/pml/2D')
 args = parser.parse_args()
+save_dir = args.savedir
 smooth = args.smooth
 filter_n = args.filtw
 
@@ -38,10 +40,10 @@ if args.learnsb:
 
 n = args.cells
 try:
-    alpha = func(torch.load(f"/mnt/PAULO/mark/pml/2D/alpha_profile_{strmod}_{n}.pyt"))
-    sigma = softplus(torch.load(f"/mnt/PAULO/mark/pml/2D/sigma_0_{strmod}_{n}.pyt"))
+    alpha = func(torch.load(f"{save_dir}/alpha_profile_{strmod}_{n}.pyt"))
+    sigma = softplus(torch.load(f"{save_dir}/sigma_0_{strmod}_{n}.pyt"))
     sigmastar = softplus(
-        torch.load(f"/mnt/PAULO/mark/pml/2D/sigmastar_0_{strmod}_{n}.pyt")
+        torch.load(f"{save_dir}/sigmastar_0_{strmod}_{n}.pyt")
     )
     print('Found previous profiles')
     init = (alpha.numpy(), float(sigma), float(sigmastar))
@@ -74,8 +76,9 @@ if smooth:
     strmod += f"_smooth_{filter_n}"
 if args.learnsb:
     strmod += "_sb"
-torch.save(best["alpha"], f"/mnt/PAULO/mark/pml/2D/alpha_profile_{strmod}_{n}.pyt")
-torch.save(best["sigma"], f"/mnt/PAULO/mark/pml/2D/sigma_0_{strmod}_{n}.pyt")
-torch.save(best["sigmastar"], f"/mnt/PAULO/mark/pml/2D/sigmastar_0_{strmod}_{n}.pyt")
-torch.save(hist, f"/mnt/PAULO/mark/pml/2D/hist_0_{strmod}_{n}.pyt")
-torch.save(big_L, f"/mnt/PAULO/mark/pml/2D/big_L_0_{strmod}_{n}.pyt")
+torch.save(best["alpha"], f"{save_dir}/alpha_profile_{strmod}_{n}.pyt")
+torch.save(best["sigma"], f"{save_dir}/sigma_0_{strmod}_{n}.pyt")
+torch.save(best["sigmastar"], f"{save_dir}/sigmastar_0_{strmod}_{n}.pyt")
+torch.save(hist, f"{save_dir}/hist_0_{strmod}_{n}.pyt")
+torch.save(big_L, f"{save_dir}/big_L_0_{strmod}_{n}.pyt")
+

@@ -41,11 +41,9 @@ if args.learnsb:
 
 n = args.cells
 try:
-    alpha = func(torch.load(f"{save_dir}/alpha_profile_{strmod}_{n}.pyt"))
-    sigma = softplus(torch.load(f"{save_dir}/sigma_0_{strmod}_{n}.pyt"))
-    sigmastar = softplus(
-        torch.load(f"{save_dir}/sigmastar_0_{strmod}_{n}.pyt")
-    )
+    alpha = torch.load(f"{save_dir}/alpha_profile_{strmod}_{n}.pyt")
+    sigma = torch.load(f"{save_dir}/sigma_0_{strmod}_{n}.pyt")
+    sigmastar = torch.load(f"{save_dir}/sigmastar_0_{strmod}_{n}.pyt")
     print('Found previous profiles')
     init = (alpha.numpy(), float(sigma), float(sigmastar))
 except FileNotFoundError:

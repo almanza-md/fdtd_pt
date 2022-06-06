@@ -27,7 +27,9 @@ parser.add_argument("--x0", type=float, default=-1.0)
 parser.add_argument("--niter", type=int, default=10000)
 parser.add_argument("--lr", type=float, default=0.01)
 parser.add_argument("--savedir", default='/mnt/PAULO/mark/pml/2D')
+parser.add_argument("--ignoreold", action='store_true')
 args = parser.parse_args()
+ignoreold = args.ignoreold
 save_dir = args.savedir
 smooth = args.smooth
 filter_n = args.filtw
@@ -47,6 +49,9 @@ try:
     init = (alpha.numpy(), float(sigma), float(sigmastar))
 except FileNotFoundError:
     print('No previous profiles')
+    init = (0.0, 10.0, 10.0)
+if ignoreold:
+    print('Ignoring previous profiles')
     init = (0.0, 10.0, 10.0)
 theta = 0
 v = args.speed

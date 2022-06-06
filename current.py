@@ -270,7 +270,8 @@ def jfunc_dep(x, vx, vy, L, x0, y0, delta, pml_dep=True, big_box=False,smooth=Fa
         t0 = nodep_tmax
     vel = torch.tensor([[vx, vy, 0.0]])
     #vel_list = [vel * 0.5*(1+torch.tanh(1*(ti-2))) for ti in t]
-    vel_list = [vel * sin(ti*torch.pi/2)**2 if ti<1 else vel for ti in t]
+    #vel_list = [vel * sin(ti*torch.pi/2)**2 if ti<1 else vel for ti in t]
+    vel_list = [vel for ti in t]
     poslist = [torch.tensor([[x0 + v[0, 0] * tp, y0 + v[0, 1] * tp]]) for (tp,v) in zip(t,vel_list)]
     poslist = [torch.tensor([[x0,y0]])]
     for i in range(1,len(t)):

@@ -63,9 +63,9 @@ def auto_opt(
         params.append(sb)
     else:
         sb = se
-    a_opt = torch.optim.Adam(params, lr=lr)
+    a_opt = torch.optim.Adadelta(params)
 
-    lr_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(a_opt,factor=0.5,threshold=1e-12, threshold_mode='abs')
+    #lr_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(a_opt,factor=0.5,threshold=1e-12, threshold_mode='abs')
 
     loss = 0.0
 

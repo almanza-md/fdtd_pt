@@ -124,78 +124,80 @@ def current_dep(pos, vel, xx, yy, q=1, init=False,old_pos=None,old_vel=None):
     xshifts = xidx - xidx_old
     yshifts = yidx - yidx_old
     # print(xshifts)
-    if init:
-        Sxy = torch.einsum("i...,j...->ij...", Sx_new, Sy_new)
-        J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, :] += torch.squeeze(Sxy*vel)
-        # J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, 1] += torch.squeeze(W2)
-        # J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, 2] += torch.squeeze(W3)
-        # J[xidx, yidx, :] += Sx_new[2] * Sy_new[2] * vel
-        # J[xidx - 1, yidx, :] += Sx_new[1] * Sy_new[2] * vel
-        # J[xidx - 1, yidx - 1, :] += Sx_new[1] * Sy_new[1] * vel
-        # J[xidx, yidx - 1, :] += Sx_new[2] * Sy_new[1] * vel
-        # J[(xidx + 1) % n, yidx, :] += Sx_new[3] * Sy_new[2] * vel
-        # J[xidx, (yidx + 1) % m, :] += Sx_new[2] * Sy_new[3] * vel
-        # J[(xidx + 1) % n, (yidx + 1) % m, :] += Sx_new[3] * Sy_new[3] * vel
-        # J[xidx - 1, (yidx + 1) % m, :] += Sx_new[1] * Sy_new[3] * vel
-        # J[(xidx + 1) % n, yidx - 1, :] += Sx_new[3] * Sy_new[1] * vel
-        return J
-    else:
-        Sx_new = torch.squeeze(
-            torch.stack(
-                [
-                    torch.roll(s, int(xs), dims=0)
-                    for (s, xs) in zip(torch.split(Sx_new, 1, dim=1), xshifts)
-                ],
-                dim=1,
-            ),
-            dim=-1,
-        )
-        DSx = Sx_new - Sx_old
-        Sy_new = torch.squeeze(
-            torch.stack(
-                [
-                    torch.roll(s, int(ys), dims=0)
-                    for (s, ys) in zip(torch.split(Sy_new, 1, dim=1), yshifts)
-                ],
-                dim=1,
-            ),
-            dim=-1,
-        )
-        DSy = Sy_new - Sy_old
+    try:
+        if init:
+            Sxy = torch.einsum("i...,j...->ij...", Sx_new, Sy_new)
+            J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, :] += torch.squeeze(Sxy*vel)
+            # J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, 1] += torch.squeeze(W2)
+            # J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, 2] += torch.squeeze(W3)
+            # J[xidx, yidx, :] += Sx_new[2] * Sy_new[2] * vel
+            # J[xidx - 1, yidx, :] += Sx_new[1] * Sy_new[2] * vel
+            # J[xidx - 1, yidx - 1, :] += Sx_new[1] * Sy_new[1] * vel
+            # J[xidx, yidx - 1, :] += Sx_new[2] * Sy_new[1] * vel
+            # J[(xidx + 1) % n, yidx, :] += Sx_new[3] * Sy_new[2] * vel
+            # J[xidx, (yidx + 1) % m, :] += Sx_new[2] * Sy_new[3] * vel
+            # J[(xidx + 1) % n, (yidx + 1) % m, :] += Sx_new[3] * Sy_new[3] * vel
+            # J[xidx - 1, (yidx + 1) % m, :] += Sx_new[1] * Sy_new[3] * vel
+            # J[(xidx + 1) % n, yidx - 1, :] += Sx_new[3] * Sy_new[1] * vel
+            return J
+        else:
+            Sx_new = torch.squeeze(
+                torch.stack(
+                    [
+                        torch.roll(s, int(xs), dims=0)
+                        for (s, xs) in zip(torch.split(Sx_new, 1, dim=1), xshifts)
+                    ],
+                    dim=1,
+                ),
+                dim=-1,
+            )
+            DSx = Sx_new - Sx_old
+            Sy_new = torch.squeeze(
+                torch.stack(
+                    [
+                        torch.roll(s, int(ys), dims=0)
+                        for (s, ys) in zip(torch.split(Sy_new, 1, dim=1), yshifts)
+                    ],
+                    dim=1,
+                ),
+                dim=-1,
+            )
+            DSy = Sy_new - Sy_old
 
-        W = Wfunc(Sx_old, Sy_old, DSx, DSy)
+            W = Wfunc(Sx_old, Sy_old, DSx, DSy)
 
-        W1 = -q * (dx/dt) * torch.cumsum(W[..., 0], dim=0)
-        W2 = -q * (dy/dt) * torch.cumsum(W[..., 1], dim=1)
-        W3 = -q * vel[:, 2] * W[..., 2]
+            W1 = -q * (dx/dt) * torch.cumsum(W[..., 0], dim=0)
+            W2 = -q * (dy/dt) * torch.cumsum(W[..., 1], dim=1)
+            W3 = -q * vel[:, 2] * W[..., 2]
 
-        #W1 = q*(dx/dt)*(W[...,0] +  torch.sum(W[...,0],dim=0, keepdims=True) - torch.cumsum(W[...,0],dim=0))
-        #W2 = q*(dy/dt)*(W[...,1] +  torch.sum(W[...,1],dim=1, keepdims=True) - torch.cumsum(W[...,1],dim=1))
-        #W3 = q*vel[:,2]*W[...,2]
-        # print(DSx)
-        # print(Sx_old.shape)
-        J[
-            xidx_old - 2 : xidx_old + 3, yidx_old - 2 : yidx_old + 3, 0
-        ] += torch.squeeze(W1)
-        J[
-            xidx_old - 2 : xidx_old + 3, yidx_old - 2 : yidx_old + 3, 1
-        ] += torch.squeeze(W2)
-        J[
-            xidx_old - 2 : xidx_old + 3, yidx_old - 2 : yidx_old + 3, 2
-        ] += torch.squeeze(W3)
-        # J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, 0] += torch.squeeze(W1)
-        # J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, 1] += torch.squeeze(W2)
-        # J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, 2] += torch.squeeze(W3)
-        # J[xidx,yidx,:]                 += Sx_new[2]*Sy_new[2]*vel
-        # J[xidx-1,yidx,:]               += Sx_new[1]*Sy_new[2]*vel
-        # J[xidx-1,yidx-1,:]             += Sx_new[1]*Sy_new[1]*vel
-        # J[xidx,yidx-1,:]               += Sx_new[2]*Sy_new[1]*vel
-        # J[(xidx+1) % n,yidx,:]         += Sx_new[3]*Sy_new[2]*vel
-        # J[xidx,(yidx+1) % m,:]         += Sx_new[2]*Sy_new[3]*vel
-        # J[(xidx+1) % n,(yidx+1) % m,:] += Sx_new[3]*Sy_new[3]*vel
-        # J[xidx-1,(yidx+1) % m,:]       += Sx_new[1]*Sy_new[3]*vel
-        # J[(xidx+1) % n,yidx-1,:]       += Sx_new[3]*Sy_new[1]*vel
-    
+            #W1 = q*(dx/dt)*(W[...,0] +  torch.sum(W[...,0],dim=0, keepdims=True) - torch.cumsum(W[...,0],dim=0))
+            #W2 = q*(dy/dt)*(W[...,1] +  torch.sum(W[...,1],dim=1, keepdims=True) - torch.cumsum(W[...,1],dim=1))
+            #W3 = q*vel[:,2]*W[...,2]
+            # print(DSx)
+            # print(Sx_old.shape)
+            J[
+                xidx_old - 2 : xidx_old + 3, yidx_old - 2 : yidx_old + 3, 0
+            ] += torch.squeeze(W1)
+            J[
+                xidx_old - 2 : xidx_old + 3, yidx_old - 2 : yidx_old + 3, 1
+            ] += torch.squeeze(W2)
+            J[
+                xidx_old - 2 : xidx_old + 3, yidx_old - 2 : yidx_old + 3, 2
+            ] += torch.squeeze(W3)
+            # J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, 0] += torch.squeeze(W1)
+            # J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, 1] += torch.squeeze(W2)
+            # J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, 2] += torch.squeeze(W3)
+            # J[xidx,yidx,:]                 += Sx_new[2]*Sy_new[2]*vel
+            # J[xidx-1,yidx,:]               += Sx_new[1]*Sy_new[2]*vel
+            # J[xidx-1,yidx-1,:]             += Sx_new[1]*Sy_new[1]*vel
+            # J[xidx,yidx-1,:]               += Sx_new[2]*Sy_new[1]*vel
+            # J[(xidx+1) % n,yidx,:]         += Sx_new[3]*Sy_new[2]*vel
+            # J[xidx,(yidx+1) % m,:]         += Sx_new[2]*Sy_new[3]*vel
+            # J[(xidx+1) % n,(yidx+1) % m,:] += Sx_new[3]*Sy_new[3]*vel
+            # J[xidx-1,(yidx+1) % m,:]       += Sx_new[1]*Sy_new[3]*vel
+            # J[(xidx+1) % n,yidx-1,:]       += Sx_new[3]*Sy_new[1]*vel
+    except:
+        pass
     return J
 
 

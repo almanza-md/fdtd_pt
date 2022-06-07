@@ -177,7 +177,7 @@ def auto_opt(
     Ef = Ef[
         big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :
     ].clone()
-    Uref = torch.sqrt(torch.sum(torch.square(Ef) + torch.square(Bf)))
+    Uref = torch.sum(torch.square(Ef) + torch.square(Bf))
     for i in trange(n_iter):
         a_opt.zero_grad()
         loss = sim(

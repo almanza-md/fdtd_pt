@@ -307,7 +307,7 @@ def jfunc_dep(x, vx, vy, L, x0, y0, delta, pml_dep=True, big_box=False,smooth=Fa
         Jx = torch.squeeze(torch.nn.functional.conv2d(torch.unsqueeze(Jx,dim=1),filter,padding='same'))
         Jy = torch.squeeze(torch.nn.functional.conv2d(torch.unsqueeze(Jy,dim=1),filter,padding='same'))
         Jz = torch.squeeze(torch.nn.functional.conv2d(torch.unsqueeze(Jz,dim=1),filter,padding='same'))
-    #Jx *= c_weight
-    #Jy *= c_weight
-    #Jz *= c_weight
+    Jx *= c_weight
+    Jy *= c_weight
+    Jz *= c_weight
     return Jx, Jy, Jz, t

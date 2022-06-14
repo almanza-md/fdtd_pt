@@ -172,6 +172,14 @@ def sim_EB(
 
     (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, L, dt)
     alpha = get_alpha(alpha0, xx)
+    if type(alpha)==tuple:
+        alphax = alpha[0]
+        alphay = alpha[1]
+        #alphaz = alpha[2]
+    else:
+        alphax = alpha
+        alphay = alpha
+        #alphaz = alpha
     device = xx.device
     Earr = torch.zeros((xx.shape[0], xx.shape[1], 3, t.shape[0]))
     Barr = torch.zeros((xx.shape[0], xx.shape[1], 3, t.shape[0]))
@@ -185,8 +193,8 @@ def sim_EB(
             b_y,
             b_zx,
             b_zy,
-            J_x.to(device) * alpha,
-            J_y.to(device) * alpha,
+            J_x.to(device) * alphax,
+            J_y.to(device) * alphay,
             J_z.to(device),
             dx,
             Cax,

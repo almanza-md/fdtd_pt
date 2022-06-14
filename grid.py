@@ -92,7 +92,7 @@ def get_CD(
     return Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay
 
 
-@torch.jit.script
+#@torch.jit.script
 def get_alpha(alpha0, arr):
     if type(alpha0)==tuple:
         n = alpha0[0].shape[0]

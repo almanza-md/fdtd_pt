@@ -104,7 +104,7 @@ def get_alpha(alpha0, arr):
             alphax[-n:, 0] *= a
             alphay[0, 0:n] *= torch.flipud(a)
             alphay[0, -n:] *= a
-            alpha[i] *= alphax
+            alpha[i][:] *= alphax
             alpha[i][n:-n] *= alphay
     else:
         n = alpha0.shape[0]

@@ -153,6 +153,8 @@ def auto_opt(
         L=torch.tensor(2, device=device), smooth=smooth_current,filter_n=filter_n
     )
     big_L = round(float(t[-1]))#*sqrt((vx)**2 + (vy)**2))
+    if big_L <= 2:
+        big_L = 4
     (
         xb,
         tb,

@@ -28,32 +28,71 @@ def auto_opt(
     lr=0.1,
     learn_se=False,
     learn_sb=False,
-    smooth_current=False,filter_n=1
+    smooth_current=False,filter_n=1,vec_a=False
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if type(init[0]) == float:
-        if init[0] == 0:
-            a = torch.linspace(
-                start=alph0,
-                end=-alph0,
-                steps=ndelta,
-                requires_grad=True,
-                dtype=torch.float32,
-                device=device,
-            )
+    if vec_a:
+        if type(init[0]) == float:
+            if init[0] == 0:
+                ax = torch.linspace(
+                    start=alph0,
+                    end=-alph0,
+                    steps=ndelta,
+                    requires_grad=True,
+                    dtype=torch.float32,
+                    device=device,
+                )
+                ay = torch.linspace(
+                    start=alph0,
+                    end=-alph0,
+                    steps=ndelta,
+                    requires_grad=True,
+                    dtype=torch.float32,
+                    device=device,
+                )
+            else:
+                ax = init[0] * torch.ones(
+                    ndelta,
+                    dtype=torch.float32,
+                    device=device,
+                )
+                ax.requires_grad = True
+                ay = init[0] * torch.ones(
+                    ndelta,
+                    dtype=torch.float32,
+                    device=device,
+                )
+                ay.requires_grad = True
         else:
-            a = init[0] * torch.ones(
-                ndelta,
-                dtype=torch.float32,
-                device=device,
-            )
-            a.requires_grad = True
+            ax = torch.tensor(init[0],dtype=torch.float32,requires_grad=True,device=device)
+            ay = torch.tensor(init[0],dtype=torch.float32,requires_grad=True,device=device)
     else:
-        a = torch.tensor(init[0],dtype=torch.float32,requires_grad=True,device=device)
+        if type(init[0]) == float:
+            if init[0] == 0:
+                a = torch.linspace(
+                    start=alph0,
+                    end=-alph0,
+                    steps=ndelta,
+                    requires_grad=True,
+                    dtype=torch.float32,
+                    device=device,
+                )
+            else:
+                a = init[0] * torch.ones(
+                    ndelta,
+                    dtype=torch.float32,
+                    device=device,
+                )
+                a.requires_grad = True
+        else:
+            a = torch.tensor(init[0],dtype=torch.float32,requires_grad=True,device=device)
     se = torch.tensor(
         init[1], dtype=torch.float32, requires_grad=learn_se, device=device
     )
-    params = [a]
+    if vec_a:
+        params = [ax,ay]
+    else:
+        params = [a]
     if learn_se:
         params.append(se)
     if learn_sb:
@@ -178,10 +217,15 @@ def auto_opt(
         big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :
     ].clone()
     Uref = torch.sum(torch.square(Ef) + torch.square(Bf))
+    
     for i in trange(n_iter):
         a_opt.zero_grad()
+        if vec_a:
+            func_a = (func(ax),func(ay))
+        else:
+            func_a = func(a)
         loss = sim(
-            func(a),
+            func_a,
             softplus(se),
             softplus(sb),
             xx,
@@ -210,11 +254,18 @@ def auto_opt(
         loss /= Uref
         loss.backward()
         l = loss.detach()
-        if i == 0 or l < min(loss_hist):
-            a_best = a.detach().cpu().clone()
-            se_best = se.detach().cpu().clone()
-            sb_best = sb.detach().cpu().clone()
-        a_hist.append(a.detach().cpu().clone())
+        if vec_a:
+            if i == 0 or l < min(loss_hist):
+                a_best = (ax.detach().cpu().clone(),ay.detach().cpu().clone())
+                se_best = se.detach().cpu().clone()
+                sb_best = sb.detach().cpu().clone()
+            a_hist.append((ax.detach().cpu().clone(),ay.detach().cpu().clone()))
+        else:
+            if i == 0 or l < min(loss_hist):
+                a_best = a.detach().cpu().clone()
+                se_best = se.detach().cpu().clone()
+                sb_best = sb.detach().cpu().clone()
+            a_hist.append(a.detach().cpu().clone())
         se_hist.append(se.detach().cpu().clone())
         sb_hist.append(sb.detach().cpu().clone())
         loss_hist.append(l)
@@ -254,7 +305,7 @@ def auto_opt(
 
             a_opt.step()
     return (
-        {"alpha": a_best.cpu(), "sigma": se_best.cpu(), "sigmastar": sb_best.cpu()},
+        {"alpha": a_best, "sigma": se_best, "sigmastar": sb_best},
         {"alpha": a_hist, "sigma": se_hist, "sigmastar": sb_hist, "loss": loss_hist},
         Bf.cpu(),
         Ef.cpu(),

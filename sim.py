@@ -96,6 +96,14 @@ def sim(
 
     (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, L, dt)
     alpha = get_alpha(alpha0, xx)
+    if type(alpha)==tuple:
+        alphax = alpha[0]
+        alphay = alpha[1]
+        #alphaz = alpha[2]
+    else:
+        alphax = alpha
+        alphay = alpha
+        #alphaz = alpha
     device = xx.device
     for J_x, J_y, J_z in Jloader:
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
@@ -107,9 +115,9 @@ def sim(
             b_y,
             b_zx,
             b_zy,
-            J_x.to(device) * alpha,
-            J_y.to(device) * alpha,
-            J_z.to(device),
+            J_x.to(device) * alphax,
+            J_y.to(device) * alphay,
+            J_z.to(device), #* alphaz,
             dx,
             Cax,
             Cbx,

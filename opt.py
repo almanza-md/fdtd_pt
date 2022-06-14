@@ -64,8 +64,8 @@ def auto_opt(
                 )
                 ay.requires_grad = True
         else:
-            ax = torch.tensor(init[0],dtype=torch.float32,requires_grad=True,device=device)
-            ay = torch.tensor(init[0],dtype=torch.float32,requires_grad=True,device=device)
+            ax = torch.tensor(init[0][0],dtype=torch.float32,requires_grad=True,device=device)
+            ay = torch.tensor(init[0][1],dtype=torch.float32,requires_grad=True,device=device)
     else:
         if type(init[0]) == float:
             if init[0] == 0:

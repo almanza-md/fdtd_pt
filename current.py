@@ -65,9 +65,9 @@ def particle_shape(pos, x, y, q=1):
     xidx = torch.argmin(torch.abs(pos[:, 0] - x), dim=0)
     yidx = torch.argmin(torch.abs(pos[:, 1] - y), dim=0)
     px = torch.diag((pos[:, 0] - x[xidx]) / dx)
-    #px += torch.sign(px) * 0.5
+    # px += torch.sign(px) * 0.5
     py = torch.diag((pos[:, 1] - y[yidx]) / dy)
-    #py += torch.sign(py) * 0.5
+    # py += torch.sign(py) * 0.5
     Sx = torch.unsqueeze((q / 1) * (3 / 4 - torch.square(px)), dim=1)
     pad = torch.zeros_like(Sx)
     Sx_m = torch.unsqueeze((q / (2 * 1)) * torch.square((1 / 2 - px)), dim=1)
@@ -99,7 +99,7 @@ def Wfunc(Sx_old, Sy_old, DSx, DSy):
 
 
 # from fdtd_pt.current import current_dep
-def current_dep(pos, vel, xx, yy, q=1, init=False,old_pos=None,old_vel=None):
+def current_dep(pos, vel, xx, yy, q=1, init=False, old_pos=None, old_vel=None):
     # if J0 is None:
     J = torch.zeros((xx.shape[0], xx.shape[1], 3), device=xx.device)
     x = xx[:, 0:1]
@@ -109,25 +109,23 @@ def current_dep(pos, vel, xx, yy, q=1, init=False,old_pos=None,old_vel=None):
     m = y.shape[0]
     dy = y[1] - y[0]
     dt = float(0.98 * dx / sqrt(2))
-    
+
     xidx, yidx, Sx_new, Sy_new = particle_shape(pos, x, y, q)
     if old_pos is not None:
-        xidx_old, yidx_old, Sx_old, Sy_old = particle_shape(
-            old_pos, x, y, q
-        )
+        xidx_old, yidx_old, Sx_old, Sy_old = particle_shape(old_pos, x, y, q)
     else:
         xidx_old, yidx_old, Sx_old, Sy_old = particle_shape(
             pos - dt * vel[:, 0:2], x, y, q
         )
     if old_vel is not None:
-        vel = 0.5*(vel+old_vel)
+        vel = 0.5 * (vel + old_vel)
     xshifts = xidx - xidx_old
     yshifts = yidx - yidx_old
     # print(xshifts)
 
     if init:
         Sxy = torch.einsum("i...,j...->ij...", Sx_new, Sy_new)
-        J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, :] += torch.squeeze(Sxy*vel)
+        J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, :] += torch.squeeze(Sxy * vel)
         # J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, 1] += torch.squeeze(W2)
         # J[xidx - 2 : xidx + 3, yidx - 2 : yidx + 3, 2] += torch.squeeze(W3)
         # J[xidx, yidx, :] += Sx_new[2] * Sy_new[2] * vel
@@ -166,13 +164,13 @@ def current_dep(pos, vel, xx, yy, q=1, init=False,old_pos=None,old_vel=None):
 
         W = Wfunc(Sx_old, Sy_old, DSx, DSy)
 
-        W1 = -q * (dx/dt) * torch.cumsum(W[..., 0], dim=0)
-        W2 = -q * (dy/dt) * torch.cumsum(W[..., 1], dim=1)
+        W1 = -q * (dx / dt) * torch.cumsum(W[..., 0], dim=0)
+        W2 = -q * (dy / dt) * torch.cumsum(W[..., 1], dim=1)
         W3 = -q * vel[:, 2] * W[..., 2]
 
-        #W1 = q*(dx/dt)*(W[...,0] +  torch.sum(W[...,0],dim=0, keepdims=True) - torch.cumsum(W[...,0],dim=0))
-        #W2 = q*(dy/dt)*(W[...,1] +  torch.sum(W[...,1],dim=1, keepdims=True) - torch.cumsum(W[...,1],dim=1))
-        #W3 = q*vel[:,2]*W[...,2]
+        # W1 = q*(dx/dt)*(W[...,0] +  torch.sum(W[...,0],dim=0, keepdims=True) - torch.cumsum(W[...,0],dim=0))
+        # W2 = q*(dy/dt)*(W[...,1] +  torch.sum(W[...,1],dim=1, keepdims=True) - torch.cumsum(W[...,1],dim=1))
+        # W3 = q*vel[:,2]*W[...,2]
         # print(DSx)
         # print(Sx_old.shape)
         try:
@@ -234,23 +232,52 @@ def current_dep_old(pos, vel, xx, yy):
     return J
 
 
-def jfunc_dep(x, vx, vy, L, x0, y0, delta, pml_dep=True, big_box=False,smooth=False,filter_n=1,filter_mode='bilinear'):
-    assert filter_mode.lower() in ['bilinear', 'gaussian']
+def jfunc_dep(
+    x,
+    vx,
+    vy,
+    L,
+    x0,
+    y0,
+    delta,
+    pml_dep=True,
+    big_box=False,
+    smooth=False,
+    filter_n=1,
+    filter_mode="bilinear",
+    q=1,
+):
+    assert filter_mode.lower() in ["bilinear", "gaussian"]
     dx = x[1] - x[0]
     # v = torch.sqrt(torch.square(vx) + torch.square(vy))
     v = sqrt((vx) ** 2 + (vy) ** 2)
     theta = atan2(vy, vx)
+
     # L-=dx
     wall_dist = L + delta
     if np.isclose(vy, 0):
-        dist = (wall_dist - x0) / cos(theta)
-        pml_dist = (L - x0) / cos(theta)
+        xsign = vx / abs(vx)
+        dist = abs((xsign * wall_dist - x0) / cos(theta))
+        pml_dist = abs((xsign * L - x0) / cos(theta))
     elif np.isclose(vx, 0):
-        dist = (wall_dist - y0) / abs(sin(theta))
-        pml_dist = (L - y0) / abs(sin(theta))
+        ysign = vy / abs(vy)
+        dist = abs((ysign * wall_dist - y0) / abs(sin(theta)))
+        pml_dist = abs((ysign * L - y0) / abs(sin(theta)))
     else:
-        dist = min(((wall_dist - x0) / cos(theta), (wall_dist - y0) / abs(sin(theta))))
-        pml_dist = min(((L - x0) / cos(theta), (L - y0) / abs(sin(theta))))
+        ysign = vy / abs(vy)
+        xsign = vx / abs(vx)
+        dist = min(
+            (
+                abs((xsign * wall_dist - x0) / cos(theta)),
+                abs((ysign * wall_dist - y0) / abs(sin(theta))),
+            )
+        )
+        pml_dist = min(
+            (
+                abs((xsign * L - x0) / cos(theta)),
+                abs((ysign * L - y0) / abs(sin(theta))),
+            )
+        )
     dt = float(0.98 * dx / sqrt(2))
     jtmax = dist / v
     nodep_tmax = pml_dist / v
@@ -269,44 +296,93 @@ def jfunc_dep(x, vx, vy, L, x0, y0, delta, pml_dep=True, big_box=False,smooth=Fa
         c_weight[tt > nodep_tmax] = 0.0
         t0 = nodep_tmax
     vel = torch.tensor([[vx, vy, 0.0]])
-    #vel_list = [vel * 0.5*(1+torch.tanh(1*(ti-2))) for ti in t]
-    #vel_list = [vel * sin(ti*torch.pi/2)**2 if ti<1 else vel for ti in t]
+    # vel_list = [vel * 0.5*(1+torch.tanh(1*(ti-2))) for ti in t]
+    # vel_list = [vel * sin(ti*torch.pi/2)**2 if ti<1 else vel for ti in t]
     vel_list = [vel for ti in t]
-    poslist = [torch.tensor([[x0 + v[0, 0] * tp, y0 + v[0, 1] * tp]]) for (tp,v) in zip(t,vel_list)]
-    poslist = [torch.tensor([[x0,y0]])]
-    for i in range(1,len(t)):
-        dx = 0.5*(vel_list[i]+vel_list[i-1])*dt
-        poslist.append(poslist[i-1] + dx[:,0:2])
-    Jlist = [current_dep(poslist[0], 0*vel_list[0], xx[0, ...], yy[0, ...], init=True),
-    current_dep(poslist[0], vel_list[0], xx[0, ...], yy[0, ...], old_pos=poslist[0],old_vel=vel_list[0])]
+    poslist = [
+        torch.tensor([[x0 + v[0, 0] * tp, y0 + v[0, 1] * tp]])
+        for (tp, v) in zip(t, vel_list)
+    ]
+    poslist = [torch.tensor([[x0, y0]])]
+    for i in range(1, len(t)):
+        dx = 0.5 * (vel_list[i] + vel_list[i - 1]) * dt
+        poslist.append(poslist[i - 1] + dx[:, 0:2])
+    Jlist = [
+        current_dep(
+            poslist[0], 0 * vel_list[0], xx[0, ...], yy[0, ...], init=True, q=q
+        ),
+        current_dep(
+            poslist[0],
+            vel_list[0],
+            xx[0, ...],
+            yy[0, ...],
+            old_pos=poslist[0],
+            old_vel=vel_list[0],
+            q=q,
+        ),
+    ]
     ptemp = poslist[0]
     for i, tp in zip(range(2, len(t)), t[:-1]):
         if tp < t0:
-            Jlist.append(current_dep(poslist[i-1], vel_list[i-1], xx[0, ...], yy[0, ...],old_pos=poslist[i-2],old_vel=vel_list[i-2]))
-        #elif tp == t0:
+            Jlist.append(
+                current_dep(
+                    poslist[i - 1],
+                    vel_list[i - 1],
+                    xx[0, ...],
+                    yy[0, ...],
+                    old_pos=poslist[i - 2],
+                    old_vel=vel_list[i - 2],
+                    q=q,
+                )
+            )
+        # elif tp == t0:
         #    Jlist.append(current_dep(poslist[i-1], vel_list[i-1], xx[0, ...], yy[0, ...],old_pos=poslist[i-2],old_vel=vel_list[i-2]))
         #    ptemp = poslist[i]
         else:
-            Jlist.append(current_dep(poslist[i-1], 0 * vel_list[i-1], xx[0, ...], yy[0, ...],old_pos=poslist[i-2],old_vel=0*vel_list[i-2]))
+            Jlist.append(
+                current_dep(
+                    poslist[i - 1],
+                    0 * vel_list[i - 1],
+                    xx[0, ...],
+                    yy[0, ...],
+                    old_pos=poslist[i - 2],
+                    old_vel=0 * vel_list[i - 2],
+                    q=q,
+                )
+            )
 
     Jtensor = torch.stack(Jlist, dim=0)
-    if filter_mode=='gaussian':
-        filter_range = torch.linspace(-filter_n,filter_n,2*filter_n+1)
-        fxx,fyy = torch.meshgrid(filter_range,filter_range,indexing='ij')
-        gfilter = torch.exp(-1/2 * (torch.square(fxx)+torch.square(fyy)))
-        filter = torch.reshape(gfilter,(1,1,2*filter_n+1,2*filter_n+1))
+    if filter_mode == "gaussian":
+        filter_range = torch.linspace(-filter_n, filter_n, 2 * filter_n + 1)
+        fxx, fyy = torch.meshgrid(filter_range, filter_range, indexing="ij")
+        gfilter = torch.exp(-1 / 2 * (torch.square(fxx) + torch.square(fyy)))
+        filter = torch.reshape(gfilter, (1, 1, 2 * filter_n + 1, 2 * filter_n + 1))
     else:
-        filter = torch.tensor([[1/16,1/8,1/16],[1/8,1/4,1/8],[1/16,1/8,1/16]])
-        filter = torch.reshape(filter,(1,1,3,3))
+        filter = torch.tensor(
+            [[1 / 16, 1 / 8, 1 / 16], [1 / 8, 1 / 4, 1 / 8], [1 / 16, 1 / 8, 1 / 16]]
+        )
+        filter = torch.reshape(filter, (1, 1, 3, 3))
     # Jtensor /= torch.max(Jtensor)
     # Jtensor *= 4 * np.pi
     Jx, Jy, Jz = [
         torch.clone(torch.squeeze(jj)) for jj in torch.split(Jtensor, 1, dim=-1)
     ]
     if smooth:
-        Jx = torch.squeeze(torch.nn.functional.conv2d(torch.unsqueeze(Jx,dim=1),filter,padding='same'))
-        Jy = torch.squeeze(torch.nn.functional.conv2d(torch.unsqueeze(Jy,dim=1),filter,padding='same'))
-        Jz = torch.squeeze(torch.nn.functional.conv2d(torch.unsqueeze(Jz,dim=1),filter,padding='same'))
+        Jx = torch.squeeze(
+            torch.nn.functional.conv2d(
+                torch.unsqueeze(Jx, dim=1), filter, padding="same"
+            )
+        )
+        Jy = torch.squeeze(
+            torch.nn.functional.conv2d(
+                torch.unsqueeze(Jy, dim=1), filter, padding="same"
+            )
+        )
+        Jz = torch.squeeze(
+            torch.nn.functional.conv2d(
+                torch.unsqueeze(Jz, dim=1), filter, padding="same"
+            )
+        )
     Jx *= c_weight
     Jy *= c_weight
     Jz *= c_weight

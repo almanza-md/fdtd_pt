@@ -86,40 +86,50 @@ def sim_setup(
     vy,
     x0,
     y0,
-    L,
-    L0=torch.tensor(2),
+    Lx,
+    Ly,
+    L0 = None,
     use_delta=True,
     smooth=False,
     filter_n=1,
     filter_mode="bilinear",
 ):
     with torch.no_grad():
-        x, xx, yy, delta, in_sim, dx = grid_setup(ndelta, res, L)
+        x,y, xx, yy, delta, in_sim, dx = grid_setup(ndelta, res, Lx,Ly)
         device = ndelta.device
+        big_box=False
+        if L0 is not None:
+            Lx=L0[0]
+            Ly=L0[1]
+            big_box=True
         J_x1, J_y1, J_z1, t1 = jfunc_dep(
             x.cpu(),
+            y.cpu(),
             vx,
             vy,
-            L0.cpu().to(torch.float32),
+            Lx,
+            Ly,
             x0=x0,
             y0=y0,
             delta=delta.cpu(),
             pml_dep=use_delta,
-            big_box=(L > 2),
+            big_box=big_box,
             smooth=smooth,
             filter_n=filter_n,
             filter_mode=filter_mode,
         )
         J_x2, J_y2, J_z2, t2 = jfunc_dep(
             x.cpu(),
+            y.cpu(),
             -vx,
             -vy,
-            L0.cpu().to(torch.float32),
+            Lx,
+            Ly,
             x0=x0,
             y0=y0,
             delta=delta.cpu(),
             pml_dep=use_delta,
-            big_box=(L > 2),
+            big_box=big_box,
             smooth=smooth,
             filter_n=filter_n,
             filter_mode=filter_mode,
@@ -190,7 +200,8 @@ def sim(
     xx,
     yy,
     ndelta,
-    L,
+    Lx,
+    Ly,
     in_sim,
     Jloader,
     dx,
@@ -211,7 +222,7 @@ def sim(
     Bf,
 ):
 
-    (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, L, dt)
+    (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, Lx,Ly, dt)
     alpha = get_alpha(alpha0, xx)
     if type(alpha) == tuple:
         alphax = alpha[0]
@@ -268,7 +279,8 @@ def sim_EB(
     xx,
     yy,
     ndelta,
-    L,
+    Lx,
+    Ly,
     in_sim,
     Jloader,
     dx,
@@ -287,7 +299,7 @@ def sim_EB(
     b_zy,
 ):
 
-    (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, L, dt)
+    (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, Lx,Ly, dt)
     alpha = get_alpha(alpha0, xx)
     if type(alpha) == tuple:
         alphax = alpha[0]
@@ -343,7 +355,9 @@ def sim_bigbox(
     xx,
     yy,
     ndelta,
-    L,
+    Lx,
+    Ly,
+    L0,
     Jloader,
     dx,
     dt,
@@ -361,7 +375,7 @@ def sim_bigbox(
     b_zy,
 ):
 
-    (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, L, dt)
+    (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(se, sb, xx, yy, ndelta, Lx,Ly, dt)
     device = e_x.device
     Barr = torch.zeros((xx.shape[0], xx.shape[1], 3), device=device)
     Earr = torch.zeros((xx.shape[0], xx.shape[1], 3), device=device)

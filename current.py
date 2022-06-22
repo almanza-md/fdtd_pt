@@ -234,9 +234,11 @@ def current_dep_old(pos, vel, xx, yy):
 
 def jfunc_dep(
     x,
+    y,
     vx,
     vy,
-    L,
+    Lx,
+    Ly,
     x0,
     y0,
     delta,
@@ -254,28 +256,29 @@ def jfunc_dep(
     theta = atan2(vy, vx)
 
     # L-=dx
-    wall_dist = L + delta
+    wall_distx = Lx + delta
+    wall_disty = Ly + delta
     if np.isclose(vy, 0):
         xsign = vx / abs(vx)
-        dist = abs((xsign * wall_dist - x0) / cos(theta))
-        pml_dist = abs((xsign * L - x0) / cos(theta))
+        dist = abs((xsign * wall_distx - x0) / cos(theta))
+        pml_dist = abs((xsign * Lx - x0) / cos(theta))
     elif np.isclose(vx, 0):
         ysign = vy / abs(vy)
-        dist = abs((ysign * wall_dist - y0) / abs(sin(theta)))
-        pml_dist = abs((ysign * L - y0) / abs(sin(theta)))
+        dist = abs((ysign * wall_disty - y0) / abs(sin(theta)))
+        pml_dist = abs((ysign * Ly - y0) / abs(sin(theta)))
     else:
         ysign = vy / abs(vy)
         xsign = vx / abs(vx)
         dist = min(
             (
-                abs((xsign * wall_dist - x0) / cos(theta)),
-                abs((ysign * wall_dist - y0) / abs(sin(theta))),
+                abs((xsign * wall_distx - x0) / cos(theta)),
+                abs((ysign * wall_disty - y0) / abs(sin(theta))),
             )
         )
         pml_dist = min(
             (
-                abs((xsign * L - x0) / cos(theta)),
-                abs((ysign * L - y0) / abs(sin(theta))),
+                abs((xsign * Lx - x0) / cos(theta)),
+                abs((ysign * Ly - y0) / abs(sin(theta))),
             )
         )
     dt = float(0.98 * dx / sqrt(2))
@@ -283,7 +286,7 @@ def jfunc_dep(
     nodep_tmax = pml_dist / v
     tmax = float(jtmax + 2 * sqrt(2.0) * delta)
     t = torch.arange(start=0, end=tmax, step=dt)
-    tt, xx, yy = torch.meshgrid(t, x, x, indexing="ij")
+    tt, xx, yy = torch.meshgrid(t, x, y, indexing="ij")
     c_weight = torch.ones_like(tt)
 
     if big_box:

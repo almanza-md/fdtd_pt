@@ -1,3 +1,4 @@
+from importlib_metadata import requires
 import torch
 import numpy as np
 from torch.nn.functional import softplus
@@ -28,7 +29,7 @@ def auto_opt(
     lr=0.1,
     learn_se=False,
     learn_sb=False,
-    smooth_current=False,filter_n=1,vec_a=False
+    smooth_current=False,filter_n=1,vec_a=False,Lx=2,Ly=2
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if vec_a:
@@ -119,6 +120,8 @@ def auto_opt(
     ndelta = torch.tensor(ndelta, requires_grad=False, device=device)
     x0 = torch.tensor(x0, requires_grad=False)
     y0 = torch.tensor(y0, requires_grad=False)
+    Lx = torch.tensor(Lx, requires_grad=False)
+    Ly = torch.tensor(Ly, requires_grad=False)
     #vx = torch.tensor(vx, requires_grad=False)
     #vy = torch.tensor(vy, requires_grad=False)
     (
@@ -150,11 +153,9 @@ def auto_opt(
         y0=y0,
         vx=vx,
         vy=vy,
-        L=torch.tensor(2, device=device), smooth=smooth_current,filter_n=filter_n
+        Lx=Lx,Ly=Ly, smooth=smooth_current,filter_n=filter_n
     )
     big_L = round(float(t[-1]))#*sqrt((vx)**2 + (vy)**2))
-    if big_L <= 2:
-        big_L = 4
     (
         xb,
         tb,
@@ -184,15 +185,16 @@ def auto_opt(
         y0=y0,
         vx=vx,
         vy=vy,
-        L=torch.tensor(big_L, device=device), smooth=smooth_current,filter_n=filter_n
+        Lx=torch.tensor(big_L),Ly=torch.tensor(big_L), smooth=smooth_current,filter_n=filter_n
     )
-    Bf, Ef, xx_big, *_ = sim_bigbox(
+    Bf, Ef, xx_big, yy_big, _ = sim_bigbox(
         se.detach(),
         sb.detach(),
         tb,
         xxb,
         yyb,
         ndelta,
+        torch.tensor(big_L),
         torch.tensor(big_L),
         Jloaderb,
         dxb,
@@ -210,13 +212,15 @@ def auto_opt(
         b_zxb,
         b_zyb,
     )
-    big0 = torch.argmin(torch.abs(xx_big[:, 0]))
-    small0 = torch.argmin(torch.abs(xx[:, 0]))
+    big0x = torch.argmin(torch.abs(xx_big[:, 0]))
+    small0x = torch.argmin(torch.abs(xx[:, 0]))
+    big0y = torch.argmin(torch.abs(yy_big[:, 0]))
+    small0y = torch.argmin(torch.abs(yy[:, 0]))
     Bf = Bf[
-        big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :
+        big0x - small0x : big0x + small0x + 1, big0y - small0y : big0y + small0y + 1, :
     ].clone()
     Ef = Ef[
-        big0 - small0 : big0 + small0 + 1, big0 - small0 : big0 + small0 + 1, :
+        big0x - small0x : big0x + small0x + 1, big0y - small0y : big0y + small0y + 1, :
     ].clone()
     Uref = torch.sum(torch.square(Ef) + torch.square(Bf))
     
@@ -233,7 +237,8 @@ def auto_opt(
             xx,
             yy,
             ndelta,
-            torch.tensor(2, device=device),
+            Lx,
+            Ly,
             in_sim,
             Jloader,
             dx,

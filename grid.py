@@ -4,19 +4,26 @@ torch.set_default_dtype(torch.float32)
 
 # define spatial tensors (x,xx,yy) on CPU
 @torch.jit.script
-def grid_setup(ndelta, res, L):
+def grid_setup(ndelta, res, Lx, Ly):
     device = ndelta.device
-    nx = 2 * L * res + 1
-    x = torch.linspace(-L, L, nx.item(), device=device)
+    nx = 2 * Lx * res + 1
+    x = torch.linspace(-Lx, Lx, nx.item(), device=device)
 
     dx = x[1] - x[0]
-    pmlx = torch.stack([L + n * dx for n in torch.arange(1, ndelta.item() + 1)])
+    pmlx = torch.stack([Lx + n * dx for n in torch.arange(1, ndelta.item() + 1)])
 
     x = torch.cat((-1 * torch.flipud(pmlx), x, pmlx))
     dx = x[1] - x[0]
     nx = x.shape[0]
-    ny = nx
-    y = x
+    ny = 2 * Ly * res + 1
+    y = torch.linspace(-Ly, Ly, ny.item(), device=device)
+
+    dy = y[1] - y[0]
+    pmly = torch.stack([Ly + n * dy for n in torch.arange(1, ndelta.item() + 1)])
+
+    y = torch.cat((-1 * torch.flipud(pmly), y, pmly))
+    dy = y[1] - y[0]
+    ny = y.shape[0]
     delta = ndelta * dx
     xx, yy = torch.meshgrid(x, y, indexing="ij")
     in_sim = torch.ones_like(xx)
@@ -24,7 +31,7 @@ def grid_setup(ndelta, res, L):
     in_sim[-ndelta:, :] *= 0.0
     in_sim[:, 0:ndelta] *= 0.0
     in_sim[:, -ndelta:] *= 0.0
-    return x, xx, yy, delta, in_sim, dx
+    return x,y, xx, yy, delta, in_sim, dx
 
 
 @torch.jit.script
@@ -47,22 +54,25 @@ def get_sigma(
     xx,
     yy,
     ndelta,
-    L,
+    Lx,
+    Ly
 ):
     sigmax = torch.zeros_like(xx)
     sigmastarx = torch.zeros_like(xx)
     sigmay = torch.zeros_like(xx)
     sigmastary = torch.zeros_like(xx)
+
     if se.dim() == 0:
         dx = xx[1, 0] - xx[0, 0]
-        sigmax[0:ndelta, :] += se * torch.square((xx + L) / (6 * dx))[0:ndelta, :]
-        sigmay[:, 0:ndelta] += se * torch.square((yy + L) / (6 * dx))[:, 0:ndelta]
-        sigmax[-ndelta:, :] += se * torch.square((xx - L) / (6 * dx))[-ndelta:, :]
-        sigmay[:, -ndelta:] += se * torch.square((yy - L) / (6 * dx))[:, -ndelta:]
-        sigmastarx[0:ndelta, :] += sb * torch.square((xx + L) / (6 * dx))[0:ndelta, :]
-        sigmastary[:, 0:ndelta] += sb * torch.square((yy + L) / (6 * dx))[:, 0:ndelta]
-        sigmastarx[-ndelta:, :] += sb * torch.square((xx - L) / (6 * dx))[-ndelta:, :]
-        sigmastary[:, -ndelta:] += sb * torch.square((yy - L) / (6 * dx))[:, -ndelta:]
+        delta = dx*ndelta
+        sigmax[0:ndelta, :] += se * torch.square((xx + Lx) / (delta))[0:ndelta, :]
+        sigmay[:, 0:ndelta] += se * torch.square((yy + Ly) / (delta))[:, 0:ndelta]
+        sigmax[-ndelta:, :] += se * torch.square((xx - Lx) / (delta))[-ndelta:, :]
+        sigmay[:, -ndelta:] += se * torch.square((yy - Ly) / (delta))[:, -ndelta:]
+        sigmastarx[0:ndelta, :] += sb * torch.square((xx + Lx) / (delta))[0:ndelta, :]
+        sigmastary[:, 0:ndelta] += sb * torch.square((yy + Ly) / (delta))[:, 0:ndelta]
+        sigmastarx[-ndelta:, :] += sb * torch.square((xx - Lx) / (delta))[-ndelta:, :]
+        sigmastary[:, -ndelta:] += sb * torch.square((yy - Ly) / (delta))[:, -ndelta:]
     else:
         sigmax, sigmay = sig_helper(se, xx)
         sigmastarx, sigmastary = sig_helper(sb, xx)
@@ -76,10 +86,11 @@ def get_CD(
     xx,
     yy,
     ndelta,
-    L,
+    Lx,
+    Ly,
     dt,
 ):
-    sigmax, sigmay, sigmastarx, sigmastary = get_sigma(se, sb, xx, yy, ndelta, L)
+    sigmax, sigmay, sigmastarx, sigmastary = get_sigma(se, sb, xx, yy, ndelta, Lx,Ly)
     dx = xx[1, 0] - xx[0, 0]
     Dbx = ((dt / 2) / (1 + dt * sigmastarx / 4)) / dx
     Dax = (1 - dt * sigmastarx / 4) / (1 + dt * sigmastarx / 4)

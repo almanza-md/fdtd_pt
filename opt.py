@@ -185,7 +185,7 @@ def auto_opt(
         y0=y0,
         vx=vx,
         vy=vy,
-        Lx=torch.tensor(big_L),Ly=torch.tensor(big_L), smooth=smooth_current,filter_n=filter_n
+        Lx=torch.tensor(big_L),Ly=torch.tensor(big_L),L0=(Lx,Ly), smooth=smooth_current,filter_n=filter_n
     )
     Bf, Ef, xx_big, yy_big, _ = sim_bigbox(
         se.detach(),

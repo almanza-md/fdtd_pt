@@ -214,8 +214,8 @@ def auto_opt(
     )
     big0x = torch.argmin(torch.abs(xx_big[:, 0]))
     small0x = torch.argmin(torch.abs(xx[:, 0]))
-    big0y = torch.argmin(torch.abs(yy_big[:, 0]))
-    small0y = torch.argmin(torch.abs(yy[:, 0]))
+    big0y = torch.argmin(torch.abs(yy_big[0,:]))
+    small0y = torch.argmin(torch.abs(yy[0,:]))
     Bf = Bf[
         big0x - small0x : big0x + small0x + 1, big0y - small0y : big0y + small0y + 1, :
     ].clone()

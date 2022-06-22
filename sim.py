@@ -357,7 +357,6 @@ def sim_bigbox(
     ndelta,
     Lx,
     Ly,
-    L0,
     Jloader,
     dx,
     dt,

@@ -162,8 +162,8 @@ def auto_opt(
         smooth=smooth_current,
         filter_n=filter_n,
     )
-    big_L = max((round(float(t[-1])),Lx,Ly))  # *sqrt((vx)**2 + (vy)**2))
-    print(big_L)
+    big_L = max((round(float(t[-1])),float(Lx),float(Ly)))  # *sqrt((vx)**2 + (vy)**2))
+
     (
         xb,
         tb,
@@ -225,20 +225,20 @@ def auto_opt(
         b_zyb,
     )
     big0x = torch.argmin(torch.abs(xx_big[:, 0]))
-    print(big0x)
+    #print(big0x)
     small0x = torch.argmin(torch.abs(xx[:, 0]))
-    print(small0x)
+    #print(small0x)
     big0y = torch.argmin(torch.abs(yy_big[0, :]))
-    print(big0y)
+    #print(big0y)
     small0y = torch.argmin(torch.abs(yy[0, :]))
-    print(small0y)
+    #print(small0y)
     Bf = Bf[
         big0x - small0x : big0x + small0x + 1, big0y - small0y : big0y + small0y + 1, :
     ].clone()
     Ef = Ef[
         big0x - small0x : big0x + small0x + 1, big0y - small0y : big0y + small0y + 1, :
     ].clone()
-    print(Ef.shape)
+    #print(Ef.shape)
     assert Ef.shape == (xx.shape[0],xx.shape[1],3)
     Uref = torch.sum(torch.square(Ef) + torch.square(Bf))
 

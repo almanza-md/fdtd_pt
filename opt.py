@@ -1,3 +1,4 @@
+from cgitb import small
 from importlib_metadata import requires
 import torch
 import numpy as np
@@ -223,9 +224,13 @@ def auto_opt(
         b_zyb,
     )
     big0x = torch.argmin(torch.abs(xx_big[:, 0]))
+    print(big0x)
     small0x = torch.argmin(torch.abs(xx[:, 0]))
+    print(small0x)
     big0y = torch.argmin(torch.abs(yy_big[0, :]))
+    print(big0y)
     small0y = torch.argmin(torch.abs(yy[0, :]))
+    print(small0y)
     Bf = Bf[
         big0x - small0x : big0x + small0x + 1, big0y - small0y : big0y + small0y + 1, :
     ].clone()

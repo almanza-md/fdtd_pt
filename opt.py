@@ -232,6 +232,7 @@ def auto_opt(
     Ef = Ef[
         big0x - small0x : big0x + small0x + 1, big0y - small0y : big0y + small0y + 1, :
     ].clone()
+    assert Ef.shape == (xx.shape[0],xx.shape[1],3)
     Uref = torch.sum(torch.square(Ef) + torch.square(Bf))
 
     for i in trange(n_iter):

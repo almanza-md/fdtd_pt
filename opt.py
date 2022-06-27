@@ -163,6 +163,7 @@ def auto_opt(
         filter_n=filter_n,
     )
     big_L = round(float(t[-1]))  # *sqrt((vx)**2 + (vy)**2))
+    print(big_L)
     (
         xb,
         tb,

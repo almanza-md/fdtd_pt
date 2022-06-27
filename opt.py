@@ -162,7 +162,7 @@ def auto_opt(
         smooth=smooth_current,
         filter_n=filter_n,
     )
-    big_L = round(float(t[-1]))  # *sqrt((vx)**2 + (vy)**2))
+    big_L = max((round(float(t[-1])),Lx,Ly))  # *sqrt((vx)**2 + (vy)**2))
     print(big_L)
     (
         xb,

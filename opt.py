@@ -29,7 +29,11 @@ def auto_opt(
     lr=0.1,
     learn_se=False,
     learn_sb=False,
-    smooth_current=False,filter_n=1,vec_a=False,Lx=2,Ly=2
+    smooth_current=False,
+    filter_n=1,
+    vec_a=False,
+    Lx=2,
+    Ly=2,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if vec_a:
@@ -43,14 +47,7 @@ def auto_opt(
                     dtype=torch.float32,
                     device=device,
                 )
-                ay = torch.linspace(
-                    start=alph0,
-                    end=-alph0,
-                    steps=ndelta,
-                    requires_grad=True,
-                    dtype=torch.float32,
-                    device=device,
-                )
+                ay = torch.ones_like(ax, requires_grad=True)
             else:
                 ax = init[0] * torch.ones(
                     ndelta,
@@ -65,8 +62,12 @@ def auto_opt(
                 )
                 ay.requires_grad = True
         else:
-            ax = torch.tensor(init[0][0],dtype=torch.float32,requires_grad=True,device=device)
-            ay = torch.tensor(init[0][1],dtype=torch.float32,requires_grad=True,device=device)
+            ax = torch.tensor(
+                init[0][0], dtype=torch.float32, requires_grad=True, device=device
+            )
+            ay = torch.tensor(
+                init[0][1], dtype=torch.float32, requires_grad=True, device=device
+            )
     else:
         if type(init[0]) == float:
             if init[0] == 0:
@@ -86,12 +87,14 @@ def auto_opt(
                 )
                 a.requires_grad = True
         else:
-            a = torch.tensor(init[0],dtype=torch.float32,requires_grad=True,device=device)
+            a = torch.tensor(
+                init[0], dtype=torch.float32, requires_grad=True, device=device
+            )
     se = torch.tensor(
         init[1], dtype=torch.float32, requires_grad=learn_se, device=device
     )
     if vec_a:
-        params = [ax,ay]
+        params = [ax, ay]
     else:
         params = [a]
     if learn_se:
@@ -105,7 +108,7 @@ def auto_opt(
         sb = se
     a_opt = torch.optim.NAdam(params, lr=lr)
 
-    #lr_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(a_opt,factor=0.5,threshold=1e-12, threshold_mode='abs')
+    # lr_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(a_opt,factor=0.5,threshold=1e-12, threshold_mode='abs')
 
     loss = 0.0
 
@@ -122,8 +125,8 @@ def auto_opt(
     y0 = torch.tensor(y0, requires_grad=False)
     Lx = torch.tensor(Lx, requires_grad=False)
     Ly = torch.tensor(Ly, requires_grad=False)
-    #vx = torch.tensor(vx, requires_grad=False)
-    #vy = torch.tensor(vy, requires_grad=False)
+    # vx = torch.tensor(vx, requires_grad=False)
+    # vy = torch.tensor(vy, requires_grad=False)
     (
         x,
         t,
@@ -153,9 +156,12 @@ def auto_opt(
         y0=y0,
         vx=vx,
         vy=vy,
-        Lx=Lx,Ly=Ly, smooth=smooth_current,filter_n=filter_n
+        Lx=Lx,
+        Ly=Ly,
+        smooth=smooth_current,
+        filter_n=filter_n,
     )
-    big_L = round(float(t[-1]))#*sqrt((vx)**2 + (vy)**2))
+    big_L = round(float(t[-1]))  # *sqrt((vx)**2 + (vy)**2))
     (
         xb,
         tb,
@@ -185,7 +191,11 @@ def auto_opt(
         y0=y0,
         vx=vx,
         vy=vy,
-        Lx=torch.tensor(big_L),Ly=torch.tensor(big_L),L0=(Lx,Ly), smooth=smooth_current,filter_n=filter_n
+        Lx=torch.tensor(big_L),
+        Ly=torch.tensor(big_L),
+        L0=(Lx, Ly),
+        smooth=smooth_current,
+        filter_n=filter_n,
     )
     Bf, Ef, xx_big, yy_big, _ = sim_bigbox(
         se.detach(),
@@ -214,8 +224,8 @@ def auto_opt(
     )
     big0x = torch.argmin(torch.abs(xx_big[:, 0]))
     small0x = torch.argmin(torch.abs(xx[:, 0]))
-    big0y = torch.argmin(torch.abs(yy_big[0,:]))
-    small0y = torch.argmin(torch.abs(yy[0,:]))
+    big0y = torch.argmin(torch.abs(yy_big[0, :]))
+    small0y = torch.argmin(torch.abs(yy[0, :]))
     Bf = Bf[
         big0x - small0x : big0x + small0x + 1, big0y - small0y : big0y + small0y + 1, :
     ].clone()
@@ -223,11 +233,11 @@ def auto_opt(
         big0x - small0x : big0x + small0x + 1, big0y - small0y : big0y + small0y + 1, :
     ].clone()
     Uref = torch.sum(torch.square(Ef) + torch.square(Bf))
-    
+
     for i in trange(n_iter):
         a_opt.zero_grad()
         if vec_a:
-            func_a = (func(ax),func(ay))
+            func_a = (func(ax), func(ay))
         else:
             func_a = func(a)
         loss = sim(
@@ -263,10 +273,10 @@ def auto_opt(
         l = loss.detach()
         if vec_a:
             if i == 0 or l < min(loss_hist):
-                a_best = (ax.detach().cpu().clone(),ay.detach().cpu().clone())
+                a_best = (ax.detach().cpu().clone(), ay.detach().cpu().clone())
                 se_best = se.detach().cpu().clone()
                 sb_best = sb.detach().cpu().clone()
-            a_hist.append((ax.detach().cpu().clone(),ay.detach().cpu().clone()))
+            a_hist.append((ax.detach().cpu().clone(), ay.detach().cpu().clone()))
         else:
             if i == 0 or l < min(loss_hist):
                 a_best = a.detach().cpu().clone()
@@ -278,7 +288,7 @@ def auto_opt(
         loss_hist.append(l)
 
         a_opt.step()
-        #lr_sched.step(loss)
+        # lr_sched.step(loss)
     if loop:
         while not np.isclose(
             np.log(np.mean(loss_hist[-25:])) - np.log(np.mean(loss_hist[-100:-75])), 0.0
@@ -316,5 +326,5 @@ def auto_opt(
         {"alpha": a_hist, "sigma": se_hist, "sigmastar": sb_hist, "loss": loss_hist},
         Bf.cpu(),
         Ef.cpu(),
-        big_L
+        big_L,
     )

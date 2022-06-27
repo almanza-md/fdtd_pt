@@ -196,6 +196,7 @@ def auto_opt(
         Lx=torch.tensor(big_L),
         Ly=torch.tensor(big_L),
         L0=(Lx, Ly),
+        t_max=float(t[-1]),
         smooth=smooth_current,
         filter_n=filter_n,
     )

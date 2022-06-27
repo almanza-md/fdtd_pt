@@ -244,6 +244,7 @@ def jfunc_dep(
     delta,
     pml_dep=True,
     big_box=False,
+    t_max=None,
     smooth=False,
     filter_n=1,
     filter_mode="bilinear",
@@ -284,7 +285,10 @@ def jfunc_dep(
     dt = float(0.98 * dx / sqrt(2))
     jtmax = dist / v
     nodep_tmax = pml_dist / v
-    tmax = float(jtmax + 2 * sqrt(2.0) * delta)
+    if t_max is not None:
+        tmax = t_max
+    else:
+        tmax = float(jtmax + 2 * sqrt(2.0) * delta)
     t = torch.arange(start=0, end=tmax, step=dt)
     tt, xx, yy = torch.meshgrid(t, x, y, indexing="ij")
     c_weight = torch.ones_like(tt)

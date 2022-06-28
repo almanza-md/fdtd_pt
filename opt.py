@@ -165,12 +165,12 @@ def auto_opt(
     big_L = max((round(float(t[-1])),float(Lx),float(Ly)))  # *sqrt((vx)**2 + (vy)**2))
 
     (
-        xb,
+        _,
         tb,
         xxb,
         yyb,
-        deltab,
-        in_simb,
+        _,
+        _,
         Jloaderb,
         dxb,
         dtb,
@@ -225,6 +225,24 @@ def auto_opt(
         b_zxb,
         b_zyb,
     )
+    del tb
+    del xxb
+    del yyb
+    del Jloaderb
+    del dxb
+    del dtb
+    del maskbb
+    del maskexb
+    del maskeyb
+    del maskezb
+    del e_xb
+    del e_yb
+    del e_zxb
+    del e_zyb
+    del b_xb
+    del b_yb
+    del b_zxb
+    del b_zyb
     big0x = torch.argmin(torch.abs(xx_big[:, 0]))
     #print(big0x)
     small0x = torch.argmin(torch.abs(xx[:, 0]))

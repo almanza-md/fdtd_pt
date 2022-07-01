@@ -28,15 +28,19 @@ parser.add_argument("--y0", type=float, default=0.0)
 parser.add_argument("--degrees", type=int, default=0)
 parser.add_argument("--niter", type=int, default=10000)
 parser.add_argument("--lr", type=float, default=0.01)
-parser.add_argument("--savedir", default='/mnt/PAULO/mark/pml/2D')
-parser.add_argument("--ignoreold", action='store_true')
+parser.add_argument("--Lx", type=float, default=2.)
+parser.add_argument("--Ly", type=float, default=2.)
+parser.add_argument("--savedir", default="/mnt/PAULO/mark/pml/2D")
+parser.add_argument("--ignoreold", action="store_true")
 args = parser.parse_args()
 ignoreold = args.ignoreold
 save_dir = args.savedir
 smooth = args.smooth
 filter_n = args.filtw
 deg = args.degrees
-strmod = f"fast_theta_{deg}"
+Lx = args.Lx
+Ly = args.Ly
+strmod = f"fast_theta_{deg}_LxLy_{Lx}x{Ly}"
 if smooth:
     strmod += f"_smooth_{filter_n}"
 if args.learnsb:
@@ -44,19 +48,19 @@ if args.learnsb:
 
 n = args.cells
 try:
-    atemp = torch.load(f"{save_dir}/alpha_profile_{strmod}_{n}.pyt")
-    alpha = (atemp[0].numpy(),atemp[1].numpy())
-    sigma = torch.load(f"{save_dir}/sigma_0_{strmod}_{n}.pyt")
-    sigmastar = torch.load(f"{save_dir}/sigmastar_0_{strmod}_{n}.pyt")
-    print('Found previous profiles')
+    atemp = torch.load(f"{save_dir}/vec_alpha_profile_{strmod}_{n}.pyt")
+    alpha = (atemp[0].numpy(), atemp[1].numpy())
+    sigma = torch.load(f"{save_dir}/vec_sigma_0_{strmod}_{n}.pyt")
+    sigmastar = torch.load(f"{save_dir}/vec_sigmastar_0_{strmod}_{n}.pyt")
+    print("Found previous profiles")
     init = (alpha, float(sigma), float(sigmastar))
 except FileNotFoundError:
-    print('No previous profiles')
+    print("No previous profiles")
     init = (0.0, 10.0, 10.0)
 if ignoreold:
-    print('Ignoring previous profiles')
+    print("Ignoring previous profiles")
     init = (0.0, 10.0, 10.0)
-theta = np.pi*deg/180
+theta = np.pi * deg / 180
 v = sqrt(args.gamma**2 - 1) / args.gamma
 vx = v * cos(theta)
 vy = v * sin(theta)
@@ -73,7 +77,10 @@ best, hist, Bf, Ef, big_L = auto_opt(
     learn_sb=args.learnse,
     lr=args.lr,
     smooth_current=smooth,
-    filter_n=filter_n, vec_a=True
+    filter_n=filter_n,
+    vec_a=True,
+    Lx=Lx,
+    Ly=Ly,
 )
 
 torch.save(best["alpha"], f"{save_dir}/alpha_profile_{strmod}_{n}.pyt")

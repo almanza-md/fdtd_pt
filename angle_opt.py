@@ -83,8 +83,8 @@ best, hist, Bf, Ef, big_L = auto_opt(
     Ly=Ly,
 )
 
-torch.save(best["alpha"], f"{save_dir}/alpha_profile_{strmod}_{n}.pyt")
-torch.save(best["sigma"], f"{save_dir}/sigma_0_{strmod}_{n}.pyt")
-torch.save(best["sigmastar"], f"{save_dir}/sigmastar_0_{strmod}_{n}.pyt")
-torch.save(hist, f"{save_dir}/hist_0_{strmod}_{n}.pyt")
-torch.save(big_L, f"{save_dir}/big_L_0_{strmod}_{n}.pyt")
+torch.save(best["alpha"], f"{save_dir}/vec_alpha_profile_{strmod}_{n}.pyt")
+torch.save(best["sigma"], f"{save_dir}/vec_sigma_0_{strmod}_{n}.pyt")
+torch.save(best["sigmastar"], f"{save_dir}/vec_sigmastar_0_{strmod}_{n}.pyt")
+torch.save(hist, f"{save_dir}/vec_hist_0_{strmod}_{n}.pyt")
+torch.save(big_L, f"{save_dir}/vec_big_L_0_{strmod}_{n}.pyt")

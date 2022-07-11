@@ -116,7 +116,7 @@ def get_alpha(alpha0, arr):
             alphay[0, 0:n] *= torch.flipud(a)
             alphay[0, -n:] *= a
             alpha[i][:] *= alphax
-            alpha[i][n:-n] *= alphay
+            alpha[i][:] *= alphay
     else:
         n = alpha0.shape[0]
         alpha = torch.ones_like(arr)

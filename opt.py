@@ -243,6 +243,7 @@ def auto_opt(
     del b_yb
     del b_zxb
     del b_zyb
+    torch.cuda.empty_cache()
     big0x = torch.argmin(torch.abs(xx_big[:, 0]))
     #print(big0x)
     small0x = torch.argmin(torch.abs(xx[:, 0]))

@@ -35,6 +35,7 @@ def auto_opt(
     vec_a=False,
     Lx=2,
     Ly=2,
+    sparse_j=False
 ):
     if torch.cuda.device_count()==0:
         device = torch.device('cpu')
@@ -164,7 +165,7 @@ def auto_opt(
         Lx=Lx,
         Ly=Ly,
         smooth=smooth_current,
-        filter_n=filter_n,
+        filter_n=filter_n, sparse_j=sparse_j
     )
     big_L = max((round(float(t[-1])),float(Lx),float(Ly)))  # *sqrt((vx)**2 + (vy)**2))
 
@@ -202,7 +203,7 @@ def auto_opt(
         L0=(Lx, Ly),
         t_max=float(t[-1]),
         smooth=smooth_current,
-        filter_n=filter_n,
+        filter_n=filter_n, sparse_j=sparse_j
     )
     Bf, Ef, xx_big, yy_big, _ = sim_bigbox(
         se.detach(),

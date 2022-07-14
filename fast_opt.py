@@ -71,6 +71,8 @@ best, hist, Bf, Ef, big_L = auto_opt(
     lr=args.lr,
     smooth_current=smooth,
     filter_n=filter_n,
+    checkpoint=50,
+    save_dir=save_dir,strmod=strmod,
 )
 
 torch.save(best["alpha"], f"{save_dir}/alpha_profile_{strmod}_{n}.pyt")

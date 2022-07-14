@@ -73,6 +73,8 @@ best, hist, Bf, Ef, big_L = auto_opt(
     lr=args.lr,
     smooth_current=smooth,
     filter_n=filter_n,
+    checkpoint=50,
+    save_dir=save_dir,strmod=strmod,
 )
 strmod = "slow"
 if smooth:

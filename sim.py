@@ -158,25 +158,17 @@ def sim_setup(
             t = t1.to(device)
         dt = t[1] - t[0]
         # J_z = torch.zeros_like(J_x)
-        if not sparse_j:
-            J = torch.utils.data.TensorDataset(J_x, J_y, J_z)
-            Jloader = torch.utils.data.DataLoader(
-                J,
-                num_workers=4,
-                pin_memory=True,
-                # prefetch_factor=8,
-                persistent_workers=True,
-                batch_size=None,
-            )
-        else:
-            Jloader = [
-                (
-                    J_x[i, ...].to_sparse().to(device),
-                    J_y[i, ...].to_sparse().to(device),
-                    J_z[i, ...].to_sparse().to(device),
-                )
-                for i in range(J_x.shape[0])
-            ]
+
+        J = torch.utils.data.TensorDataset(J_x, J_y, J_z)
+        Jloader = torch.utils.data.DataLoader(
+            J,
+            num_workers=4,
+            pin_memory=True,
+            prefetch_factor=8,
+            persistent_workers=True,
+            batch_size=None,
+        )
+
 
         maskb, maskex, maskey, maskez = masks(xx)
         (e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy) = field_arrs(xx)

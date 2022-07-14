@@ -36,7 +36,11 @@ def auto_opt(
     Lx=2,
     Ly=2,
 ):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.device_count()==0:
+        device = torch.device('cpu')
+    else:# torch.cuda.device_count==1:
+        device = torch.device("cuda")
+
     if vec_a:
         if type(init[0]) == float:
             if init[0] == 0:
@@ -243,7 +247,6 @@ def auto_opt(
     del b_yb
     del b_zxb
     del b_zyb
-    torch.cuda.empty_cache()
     big0x = torch.argmin(torch.abs(xx_big[:, 0]))
     #print(big0x)
     small0x = torch.argmin(torch.abs(xx[:, 0]))
@@ -262,6 +265,7 @@ def auto_opt(
     assert Ef.shape == (xx.shape[0],xx.shape[1],3)
     Uref = torch.sum(torch.square(Ef) + torch.square(Bf))
 
+    torch.cuda.empty_cache()
     for i in trange(n_iter):
         a_opt.zero_grad()
         if vec_a:

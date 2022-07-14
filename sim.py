@@ -94,6 +94,7 @@ def sim_setup(
     smooth=False,
     filter_n=1,
     filter_mode="bilinear",
+    sparse_j=False
 ):
     with torch.no_grad():
         x,y, xx, yy, delta, in_sim, dx = grid_setup(ndelta, res, Lx,Ly)
@@ -157,8 +158,8 @@ def sim_setup(
             t = t1.to(device)
         dt = t[1] - t[0]
         # J_z = torch.zeros_like(J_x)
-
-        J = torch.utils.data.TensorDataset(J_x, J_y, J_z)
+        
+        J = torch.utils.data.TensorDataset(J_x.to_sparse(), J_y.to_sparse(), J_z.to_sparse())
         Jloader = torch.utils.data.DataLoader(
             J,
             num_workers=4,
@@ -167,6 +168,8 @@ def sim_setup(
             persistent_workers=True,
             batch_size=None,
         )
+        #else:
+        #    Jloader = (J_x.to_sparse().to(device),J_y.to_sparse().to(device),J_z.to_sparse().to(device))
 
         maskb, maskex, maskey, maskez = masks(xx)
         (e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy) = field_arrs(xx)

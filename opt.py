@@ -34,7 +34,8 @@ def auto_opt(
     filter_n=1,
     vec_a=False,
     Lx=2,
-    Ly=2,
+    Ly=2,checkpoint=50,
+    save_dir=".",strmod="",
     #sparse_j=False
 ):
     if torch.cuda.device_count()==0:
@@ -126,6 +127,7 @@ def auto_opt(
     se_best = 0.0
     sb_best = 0.0
     resolution = torch.tensor(resolution, requires_grad=False, device=device)
+    n = ndelta
     ndelta = torch.tensor(ndelta, requires_grad=False, device=device)
     x0 = torch.tensor(x0, requires_grad=False)
     y0 = torch.tensor(y0, requires_grad=False)
@@ -321,6 +323,10 @@ def auto_opt(
         loss_hist.append(l)
 
         a_opt.step()
+        if (i+1)%checkpoint==0:
+            torch.save(a_best, f"{save_dir}/vec_alpha_profile_{strmod}_{n}.pyt")
+            torch.save(se_best, f"{save_dir}/vec_sigma_0_{strmod}_{n}.pyt")
+            torch.save(sb_best, f"{save_dir}/vec_sigmastar_0_{strmod}_{n}.pyt")
         # lr_sched.step(loss)
     if loop:
         while not np.isclose(

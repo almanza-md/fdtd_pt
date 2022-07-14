@@ -324,9 +324,9 @@ def auto_opt(
 
         a_opt.step()
         if (i+1)%checkpoint==0:
-            torch.save(a_best, f"{save_dir}/vec_alpha_profile_{strmod}_{n}.pyt")
-            torch.save(se_best, f"{save_dir}/vec_sigma_0_{strmod}_{n}.pyt")
-            torch.save(sb_best, f"{save_dir}/vec_sigmastar_0_{strmod}_{n}.pyt")
+            torch.save(a_best, f"{save_dir}/{'vec_' if vec_a else ''}alpha_profile_{strmod}_{n}.pyt")
+            torch.save(se_best, f"{save_dir}/{'vec_' if vec_a else ''}sigma_0_{strmod}_{n}.pyt")
+            torch.save(sb_best, f"{save_dir}/{'vec_' if vec_a else ''}sigmastar_0_{strmod}_{n}.pyt")
         # lr_sched.step(loss)
     if loop:
         while not np.isclose(

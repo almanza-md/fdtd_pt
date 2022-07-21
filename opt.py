@@ -34,9 +34,15 @@ def auto_opt(
     filter_n=1,
     vec_a=False,
     Lx=2,
-    Ly=2,
+    Ly=2,checkpoint=50,
+    save_dir=".",strmod="",
+    #sparse_j=False
 ):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.device_count()==0:
+        device = torch.device('cpu')
+    else:# torch.cuda.device_count==1:
+        device = torch.device("cuda")
+
     if vec_a:
         if type(init[0]) == float:
             if init[0] == 0:
@@ -121,6 +127,7 @@ def auto_opt(
     se_best = 0.0
     sb_best = 0.0
     resolution = torch.tensor(resolution, requires_grad=False, device=device)
+    n = ndelta
     ndelta = torch.tensor(ndelta, requires_grad=False, device=device)
     x0 = torch.tensor(x0, requires_grad=False)
     y0 = torch.tensor(y0, requires_grad=False)
@@ -160,7 +167,7 @@ def auto_opt(
         Lx=Lx,
         Ly=Ly,
         smooth=smooth_current,
-        filter_n=filter_n,
+        filter_n=filter_n,# sparse_j=sparse_j
     )
     big_L = max((round(float(t[-1])),float(Lx),float(Ly)))  # *sqrt((vx)**2 + (vy)**2))
 
@@ -198,7 +205,7 @@ def auto_opt(
         L0=(Lx, Ly),
         t_max=float(t[-1]),
         smooth=smooth_current,
-        filter_n=filter_n,
+        filter_n=filter_n,# sparse_j=sparse_j
     )
     Bf, Ef, xx_big, yy_big, _ = sim_bigbox(
         se.detach(),
@@ -261,6 +268,7 @@ def auto_opt(
     assert Ef.shape == (xx.shape[0],xx.shape[1],3)
     Uref = torch.sum(torch.square(Ef) + torch.square(Bf))
 
+    torch.cuda.empty_cache()
     for i in trange(n_iter):
         a_opt.zero_grad()
         if vec_a:
@@ -315,6 +323,10 @@ def auto_opt(
         loss_hist.append(l)
 
         a_opt.step()
+        if (i+1)%checkpoint==0:
+            torch.save(a_best, f"{save_dir}/{'vec_' if vec_a else ''}alpha_profile_{strmod}_{n}.pyt")
+            torch.save(se_best, f"{save_dir}/{'vec_' if vec_a else ''}sigma_0_{strmod}_{n}.pyt")
+            torch.save(sb_best, f"{save_dir}/{'vec_' if vec_a else ''}sigmastar_0_{strmod}_{n}.pyt")
         # lr_sched.step(loss)
     if loop:
         while not np.isclose(

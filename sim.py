@@ -269,7 +269,8 @@ def sim(
     # Utot = Eerr+Berr
     u = torch.sum(torch.square(Earr - Ef) + torch.square(Barr - Bf), dim=-1)
     u *= in_sim
-    Utot = torch.sum(u)
+    #Utot = torch.sum(u)
+    Utot = torch.trapezoid(torch.trapezoid(u,x=yy[0,:]),x=xx[:,0])
     return Utot
 
 

@@ -288,7 +288,7 @@ def jfunc_dep(
     if t_max is not None:
         tmax = t_max
     else:
-        tmax = float(jtmax + 2 * sqrt(2.0) - delta/(v*cos(theta)))
+        tmax = float(jtmax + 2 * sqrt(2.0)*delta)
     t = torch.arange(start=0, end=tmax, step=dt)
     tt, xx, yy = torch.meshgrid(t, x, y, indexing="ij")
     c_weight = torch.ones_like(tt)

@@ -261,25 +261,25 @@ def jfunc_dep(
     wall_disty = Ly + delta
     if np.isclose(vy, 0):
         xsign = vx / abs(vx)
-        dist = (wall_distx - xsign*x0) / abs(cos(theta))
-        pml_dist = (Lx - xsign*x0) / abs(cos(theta))
+        dist = xsign*(wall_distx - xsign*x0) / cos(theta)
+        pml_dist = xsign*(Lx - xsign*x0) / cos(theta)
     elif np.isclose(vx, 0):
         ysign = vy / abs(vy)
-        dist = (wall_disty - ysign * y0) / abs(sin(theta))
-        pml_dist = (Ly - ysign * y0) / abs(sin(theta))
+        dist = ysign*(wall_disty - ysign * y0) / sin(theta)
+        pml_dist = ysign*(Ly - ysign * y0) / sin(theta)
     else:
         ysign = vy / abs(vy)
         xsign = vx / abs(vx)
         dist = min(
             (
-                (wall_distx - xsign * x0) / abs(cos(theta)),
-                (wall_disty - ysign * y0) / abs(sin(theta)),
+                xsign*(wall_distx - xsign * x0) / cos(theta),
+                ysign*(wall_disty - ysign * y0) / sin(theta),
             )
         )
         pml_dist = min(
             (
-                (Lx - xsign * x0) / abs(cos(theta)),
-                (Ly - ysign * y0) / abs(sin(theta)),
+                xsign*(Lx - xsign * x0) / cos(theta),
+                ysign*(Ly - ysign * y0) / sin(theta),
             )
         )
     dt = float(0.98 * dx / sqrt(2))

@@ -103,7 +103,7 @@ def identity_kernel(m,arr):
 # @torch.jit.script
 def get_alpha(alpha0, arr):
     if type(alpha0) == tuple:
-        if len(alpha0[0].shape == 1):
+        if len(alpha0[0].shape) == 1:
             n = alpha0[0].shape[0]
             alpha = (torch.ones_like(arr), torch.ones_like(arr), torch.ones_like(arr))
             for i, a in enumerate(alpha0):

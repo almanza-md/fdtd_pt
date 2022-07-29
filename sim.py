@@ -394,7 +394,7 @@ def sim_bigbox(
     nt = t.shape[0]
     d = float(dx*ndelta)
     tminidx = torch.argmin(torch.abs(t-(t[-1]-(2*sqrt(2)-1)*d)))
-    tpts = torch.linspace(tminidx,nt,n,dtype=torch.int64)
+    tpts = torch.linspace(tminidx,nt-1,n,dtype=torch.int64)
     if n==1:
         tpts = [nt-1]
     for i,(J_x, J_y, J_z) in enumerate(Jloader):

@@ -285,7 +285,7 @@ def sim(
     # Berr = torch.nn.functional.l1_loss(Barr,Bf)
     # Utot = Eerr+Berr
     u = torch.sum(torch.square(Earr - Ef) + torch.square(Barr - Bf), dim=2)
-    u *= in_sim
+    u *= torch.unsqueeze(in_sim,dim=-1)
     #Utot = torch.sum(u)
     Utot = torch.trapezoid(torch.trapezoid(u,x=yy[0,:],dim=1),x=xx[:,0],dim=0)
     Utot = torch.mean(Utot)

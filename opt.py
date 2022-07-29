@@ -207,7 +207,7 @@ def auto_opt(
         smooth=smooth_current,
         filter_n=filter_n,# sparse_j=sparse_j
     )
-    Bf, Ef, xx_big, yy_big, _ = sim_bigbox(
+    Bf, Ef, xx_big, yy_big, _,_ = sim_bigbox(
         se.detach(),
         sb.detach(),
         tb,

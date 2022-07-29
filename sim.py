@@ -225,7 +225,8 @@ def sim(
     b_zx,
     b_zy,
     Ef,
-    Bf
+    Bf,
+    tpts
 ):
 
     (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(
@@ -244,12 +245,12 @@ def sim(
     n = int(Ef.shape[-1])
     Barr = torch.zeros((xx.shape[0], xx.shape[1], 3, n), device=device)
     Earr = torch.zeros((xx.shape[0], xx.shape[1], 3, n), device=device)
-    nt = t.shape[0]
-    d = float(dx*ndelta)
-    tminidx = torch.argmin(torch.abs(t-(t[-1]-(2*sqrt(2)-1)*d)))
-    tpts = torch.linspace(tminidx,nt-1,n,dtype=torch.int64)
-    if n==1:
-        tpts = torch.tensor([nt-1])
+    #nt = t.shape[0]
+    #d = float(dx*ndelta)
+    #tminidx = torch.argmin(torch.abs(t-(t[-1]-(2*sqrt(2)-1)*d)))
+    #tpts = torch.linspace(tminidx,nt-1,n,dtype=torch.int64)
+    #if n==1:
+    #    tpts = torch.tensor([nt-1])
     for i,(J_x, J_y, J_z) in enumerate(Jloader):
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,

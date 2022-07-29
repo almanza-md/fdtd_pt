@@ -207,7 +207,7 @@ def auto_opt(
         smooth=smooth_current,
         filter_n=filter_n,# sparse_j=sparse_j
     )
-    Bf, Ef, xx_big, yy_big, _,_ = sim_bigbox(
+    Bf, Ef, xx_big, yy_big, tb,tpts = sim_bigbox(
         se.detach(),
         sb.detach(),
         tb,
@@ -303,7 +303,7 @@ def auto_opt(
             b_zx,
             b_zy,
             Ef,
-            Bf
+            Bf,tpts
         )
         loss /= Uref
         loss.backward()

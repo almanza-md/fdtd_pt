@@ -47,34 +47,20 @@ def auto_opt(
 
     if vec_a:
         if conv_a:
-            if type(init[0]) == float:
-                if init[0] == 0:
-                    a0 = torch.zeros((ndelta,conv_size,conv_size),dtype=torch.float32,
-                        device=device,)
-                    middle = int((conv_size+1)/2)
-                    ax = a0.clone()
-                    ax[:,middle,middle] += torch.linspace(
-                        start=alph0,
-                        end=-alph0,
-                        steps=ndelta
-                    )
-                    ax.requires_grad=True
-                    ay = a0.clone()
-                    ay[:,middle,middle] += alph0*torch.ones_like(ndelta)
-                    ay.requires_grad=True
-                else:
-                    ax = init[0] * torch.ones(
-                        ndelta,
-                        dtype=torch.float32,
-                        device=device,
-                    )
-                    ax.requires_grad = True
-                    ay = init[0] * torch.ones(
-                        ndelta,
-                        dtype=torch.float32,
-                        device=device,
-                    )
-                    ay.requires_grad = True
+            if init[0] == 0:
+                a0 = torch.zeros((ndelta,conv_size,conv_size),dtype=torch.float32,
+                    device=device,)
+                middle = int((conv_size+1)/2)
+                ax = a0.clone()
+                ax[:,middle,middle] += torch.linspace(
+                    start=alph0,
+                    end=-alph0,
+                    steps=ndelta,device=device
+                )
+                ax.requires_grad=True
+                ay = a0.clone()
+                ay[:,middle,middle] += alph0*torch.ones(ndelta,device=device)
+                ay.requires_grad=True
             else:
                 ax = torch.tensor(
                     init[0][0], dtype=torch.float32, requires_grad=True, device=device

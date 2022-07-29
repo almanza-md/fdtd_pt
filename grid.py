@@ -96,7 +96,7 @@ def get_CD(
 
 def identity_kernel(m,arr):
     ret = torch.zeros((arr.shape[0],arr.shape[1],m,m),device=arr.device)
-    middle = int((m+1)/2)
+    middle = int((m+1)/2)-1
     ret[...,middle,middle] += 1
     return ret
 

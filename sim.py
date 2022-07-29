@@ -425,11 +425,12 @@ def sim_bigbox(
             maskez,
         )
         if i in tpts:
-            Barr[..., 0, i] = b_x
-            Barr[..., 1, i] = b_y
-            Barr[..., 2, i] = b_zx + b_zy
-            Earr[..., 0, i] = e_x
-            Earr[..., 1, i] = e_y
-            Earr[..., 2, i] = e_zx + e_zy
+            ni = torch.argwhere(tpts==i)[0]
+            Barr[..., 0, ni] = b_x
+            Barr[..., 1, ni] = b_y
+            Barr[..., 2, ni] = b_zx + b_zy
+            Earr[..., 0, ni] = e_x
+            Earr[..., 1, ni] = e_y
+            Earr[..., 2, ni] = e_zx + e_zy
 
     return Barr, Earr, xx.cpu(), yy.cpu(), t.cpu(), tpts

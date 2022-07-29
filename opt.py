@@ -50,7 +50,7 @@ def auto_opt(
             if init[0] == 0:
                 a0 = torch.zeros((ndelta,conv_size,conv_size),dtype=torch.float32,
                     device=device,)
-                middle = int((conv_size+1)/2)
+                middle = int((conv_size+1)/2)-1
                 ax = a0.clone()
                 ax[:,middle,middle] += torch.linspace(
                     start=alph0,

@@ -425,7 +425,7 @@ def sim_bigbox(
             maskez,
         )
         if i in tpts:
-            ni = torch.argwhere(tpts==i)[0]
+            ni = int(torch.argwhere(tpts==i)[0])
             Barr[..., 0, ni] = b_x
             Barr[..., 1, ni] = b_y
             Barr[..., 2, ni] = b_zx + b_zy

@@ -48,18 +48,18 @@ def auto_opt(
     if vec_a:
         if conv_a:
             if init[0] == 0:
-                a0 = torch.zeros((ndelta,conv_size,conv_size),dtype=torch.float32,
+                a0 = -alph0*torch.ones((ndelta,conv_size,conv_size),dtype=torch.float32,
                     device=device,)
                 middle = int((conv_size+1)/2)-1
                 ax = a0.clone()
-                ax[:,middle,middle] += torch.linspace(
+                ax[:,middle,middle] = torch.linspace(
                     start=alph0,
                     end=-alph0,
                     steps=ndelta,device=device
                 )
                 ax.requires_grad=True
                 ay = a0.clone()
-                ay[:,middle,middle] += alph0*torch.ones(ndelta,device=device)
+                ay[:,middle,middle] = alph0*torch.ones(ndelta,device=device)
                 ay.requires_grad=True
             else:
                 ax = torch.tensor(

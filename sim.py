@@ -2,6 +2,7 @@ import torch
 from .grid import grid_setup, get_alpha, get_CD
 from .fields import masks, advance_flds, field_arrs
 from .current import jfunc_dep
+from math import sqrt
 
 torch.set_default_dtype(torch.float32)
 
@@ -381,16 +382,22 @@ def sim_bigbox(
     b_y,
     b_zx,
     b_zy,
+    n=1
 ):
 
     (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(
         se, sb, xx, yy, ndelta, Lx, Ly, dt
     )
     device = e_x.device
-    Barr = torch.zeros((xx.shape[0], xx.shape[1], 3), device=device)
-    Earr = torch.zeros((xx.shape[0], xx.shape[1], 3), device=device)
-
-    for J_x, J_y, J_z in Jloader:
+    Barr = torch.zeros((xx.shape[0], xx.shape[1], 3, n), device=device)
+    Earr = torch.zeros((xx.shape[0], xx.shape[1], 3, n), device=device)
+    nt = t.shape[0]
+    d = float(dx*ndelta)
+    tminidx = torch.argmin(torch.abs(t-(t[-1]-(2*sqrt(2)-1)*d)))
+    tpts = torch.linspace(tminidx,nt,n,dtype=torch.int64)
+    if n==1:
+        tpts = [nt-1]
+    for i,(J_x, J_y, J_z) in enumerate(Jloader):
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
             e_y,
@@ -417,11 +424,12 @@ def sim_bigbox(
             maskey,
             maskez,
         )
-    Barr[..., 0] = b_x
-    Barr[..., 1] = b_y
-    Barr[..., 2] = b_zx + b_zy
-    Earr[..., 0] = e_x
-    Earr[..., 1] = e_y
-    Earr[..., 2] = e_zx + e_zy
+        if i in tpts:
+            Barr[..., 0, i] = b_x
+            Barr[..., 1, i] = b_y
+            Barr[..., 2, i] = b_zx + b_zy
+            Earr[..., 0, i] = e_x
+            Earr[..., 1, i] = e_y
+            Earr[..., 2, i] = e_zx + e_zy
 
-    return Barr, Earr, xx.cpu(), yy.cpu(), t.cpu()
+    return Barr, Earr, xx.cpu(), yy.cpu(), t.cpu(), tpts

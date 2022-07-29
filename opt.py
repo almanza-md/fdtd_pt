@@ -266,7 +266,7 @@ def auto_opt(
         big0x - small0x : big0x + small0x + 1, big0y - small0y : big0y + small0y + 1, ...
     ].clone()
     #print(Ef.shape)
-    assert Ef.shape == (xx.shape[0],xx.shape[1],3)
+    assert Ef.shape == (xx.shape[0],xx.shape[1],3,npts)
     Uref = torch.sum(torch.square(Ef) + torch.square(Bf))
 
     torch.cuda.empty_cache()

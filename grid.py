@@ -154,7 +154,7 @@ def hole_cut(arr, i, j):
 
 
 def apply_alpha(alpha, J):
-    if len(alpha.shape[2]):
+    if len(alpha.shape)==2:
         return alpha * J
     pad = int((alpha.shape[-1] - 1) / 2)
     Jret = torch.zeros_like(J)

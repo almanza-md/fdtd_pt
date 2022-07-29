@@ -202,6 +202,7 @@ def sim(
     alpha0,
     se,
     sb,
+    t,
     xx,
     yy,
     ndelta,
@@ -225,6 +226,7 @@ def sim(
     b_zy,
     Ef,
     Bf,
+    n=1
 ):
 
     (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(
@@ -240,7 +242,15 @@ def sim(
         alphay = alpha
         # alphaz = alpha
     device = xx.device
-    for J_x, J_y, J_z in Jloader:
+    Barr = torch.zeros((xx.shape[0], xx.shape[1], 3, n), device=device)
+    Earr = torch.zeros((xx.shape[0], xx.shape[1], 3, n), device=device)
+    nt = t.shape[0]
+    d = float(dx*ndelta)
+    tminidx = torch.argmin(torch.abs(t-(t[-1]-(2*sqrt(2)-1)*d)))
+    tpts = torch.linspace(tminidx,nt-1,n,dtype=torch.int64)
+    if n==1:
+        tpts = torch.tensor([nt-1])
+    for i,(J_x, J_y, J_z) in enumerate(Jloader):
         e_x, e_y, e_zx, e_zy, b_x, b_y, b_zx, b_zy = advance_flds(
             e_x,
             e_y,
@@ -267,15 +277,18 @@ def sim(
             maskey,
             maskez,
         )
-    Earr = torch.stack((e_x, e_y, e_zx + e_zy), dim=-1)
-    Barr = torch.stack((b_x, b_y, b_zx + b_zy), dim=-1)
+        if i in tpts:
+            ni = int(torch.argwhere(tpts==i)[0])
+            Earr[...,ni] = torch.stack((e_x, e_y, e_zx + e_zy), dim=-1)
+            Barr[...,ni] = torch.stack((b_x, b_y, b_zx + b_zy), dim=-1)
     # Eerr = torch.nn.functional.l1_loss(Earr,Ef)
     # Berr = torch.nn.functional.l1_loss(Barr,Bf)
     # Utot = Eerr+Berr
-    u = torch.sum(torch.square(Earr - Ef) + torch.square(Barr - Bf), dim=-1)
+    u = torch.sum(torch.square(Earr - Ef) + torch.square(Barr - Bf), dim=2)
     u *= in_sim
     #Utot = torch.sum(u)
-    Utot = torch.trapezoid(torch.trapezoid(u,x=yy[0,:]),x=xx[:,0])
+    Utot = torch.trapezoid(torch.trapezoid(u,x=yy[0,:],dim=1),x=xx[:,0],dim=0)
+    Utot = torch.mean(Utot)
     return Utot
 
 

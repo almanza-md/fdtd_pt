@@ -31,7 +31,7 @@ def grid_setup(ndelta, res, Lx, Ly):
     in_sim[-ndelta:, :] *= 0.0
     in_sim[:, 0:ndelta] *= 0.0
     in_sim[:, -ndelta:] *= 0.0
-    return x,y, xx, yy, delta, in_sim, dx
+    return x, y, xx, yy, delta, in_sim, dx
 
 
 @torch.jit.script
@@ -48,15 +48,7 @@ def sig_helper(s0, arr):
 
 
 @torch.jit.script
-def get_sigma(
-    se,
-    sb,
-    xx,
-    yy,
-    ndelta,
-    Lx,
-    Ly
-):
+def get_sigma(se, sb, xx, yy, ndelta, Lx, Ly):
     sigmax = torch.zeros_like(xx)
     sigmastarx = torch.zeros_like(xx)
     sigmay = torch.zeros_like(xx)
@@ -64,7 +56,7 @@ def get_sigma(
 
     if se.dim() == 0:
         dx = xx[1, 0] - xx[0, 0]
-        delta = dx*ndelta
+        delta = dx * ndelta
         sigmax[0:ndelta, :] += se * torch.square((xx + Lx) / (delta))[0:ndelta, :]
         sigmay[:, 0:ndelta] += se * torch.square((yy + Ly) / (delta))[:, 0:ndelta]
         sigmax[-ndelta:, :] += se * torch.square((xx - Lx) / (delta))[-ndelta:, :]
@@ -90,7 +82,7 @@ def get_CD(
     Ly,
     dt,
 ):
-    sigmax, sigmay, sigmastarx, sigmastary = get_sigma(se, sb, xx, yy, ndelta, Lx,Ly)
+    sigmax, sigmay, sigmastarx, sigmastary = get_sigma(se, sb, xx, yy, ndelta, Lx, Ly)
     dx = xx[1, 0] - xx[0, 0]
     Dbx = ((dt / 2) / (1 + dt * sigmastarx / 4)) / dx
     Dax = (1 - dt * sigmastarx / 4) / (1 + dt * sigmastarx / 4)
@@ -103,20 +95,40 @@ def get_CD(
     return Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay
 
 
-#@torch.jit.script
+# @torch.jit.script
 def get_alpha(alpha0, arr):
-    if type(alpha0)==tuple:
-        n = alpha0[0].shape[0]
-        alpha = (torch.ones_like(arr),torch.ones_like(arr),torch.ones_like(arr))
-        for i,a in enumerate(alpha0):
-            alphax = torch.ones((arr.shape[0], 1), device=arr.device)
-            alphay = torch.ones((1, arr.shape[1]), device=arr.device)
-            alphax[0:n, 0] *= torch.flipud(a)
-            alphax[-n:, 0] *= a
-            alphay[0, 0:n] *= torch.flipud(a)
-            alphay[0, -n:] *= a
-            alpha[i][:] *= alphax
-            alpha[i][:] *= alphay
+    if type(alpha0) == tuple:
+        if len(alpha0[0].shape == 1):
+            n = alpha0[0].shape[0]
+            alpha = (torch.ones_like(arr), torch.ones_like(arr), torch.ones_like(arr))
+            for i, a in enumerate(alpha0):
+                alphax = torch.ones((arr.shape[0], 1), device=arr.device)
+                alphay = torch.ones((1, arr.shape[1]), device=arr.device)
+                alphax[0:n, 0] *= torch.flipud(a)
+                alphax[-n:, 0] *= a
+                alphay[0, 0:n] *= torch.flipud(a)
+                alphay[0, -n:] *= a
+                alpha[i][:] *= alphax
+                alpha[i][:] *= alphay
+        else:
+            n = alpha0[0].shape[0]
+            m = alpha0[0].shape[1]
+            nx = arr.shape[0]
+            ny = arr.shape[1]
+            alpha = (
+                torch.ones((nx, ny, m, m), device=arr.device),
+                torch.ones((nx, ny, m, m), device=arr.device),
+                torch.ones((nx, ny, m, m), device=arr.device),
+            )
+            for i, a in enumerate(alpha0):
+                alphax = torch.ones((arr.shape[0], 1, m,m), device=arr.device)
+                alphay = torch.ones((1, arr.shape[1],m,m), device=arr.device)
+                alphax[0:n, 0,m,m] *= torch.flipud(a)
+                alphax[-n:, 0,m,m] *= a
+                alphay[0, 0:n,m,m] *= torch.flipud(a)
+                alphay[0, -n:,m,m] *= a
+                alpha[i][:] *= alphax
+                alpha[i][:] *= alphay
     else:
         n = alpha0.shape[0]
         alpha = torch.ones_like(arr)
@@ -128,5 +140,30 @@ def get_alpha(alpha0, arr):
         alphay[0, -n:] *= alpha0
         alpha *= alphax
         alpha[n:-n] *= alphay
-        
+
     return alpha
+
+
+def hole_cut(arr, i, j):
+    r = torch.zeros_like(arr)
+    r[i, j] += 1
+    return r
+
+
+def apply_alpha(alpha, J):
+    if len(alpha.shape[2]):
+        return alpha * J
+    pad = int((alpha.shape[-1] - 1) / 2)
+    Jret = torch.zeros_like(J)
+    jpos = torch.argwhere(J)
+    for p in jpos:
+        px = p[0]
+        py = p[1]
+        Jret += hole_cut(J, px, py) * torch.squeeze(
+            torch.nn.functional.conv2d(
+                torch.reshape(J, (1, 1, J.shape[0], J.shape[1])),
+                alpha[px : px + 1, py : py + 1, :, :],
+                padding=pad,
+            )
+        )
+    return Jret

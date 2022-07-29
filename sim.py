@@ -1,5 +1,5 @@
 import torch
-from .grid import grid_setup, get_alpha, get_CD
+from .grid import grid_setup, get_alpha, get_CD, apply_alpha
 from .fields import masks, advance_flds, field_arrs
 from .current import jfunc_dep
 from math import sqrt
@@ -261,8 +261,8 @@ def sim(
             b_y,
             b_zx,
             b_zy,
-            J_x.to(device) * alphax,
-            J_y.to(device) * alphay,
+            apply_alpha(alphax,J_x.to(device)),
+            apply_alpha(alphay,J_y.to(device)),
             J_z.to(device),  # * alphaz,
             dx,
             Cax,
@@ -346,8 +346,8 @@ def sim_EB(
             b_y,
             b_zx,
             b_zy,
-            J_x.to(device) * alphax,
-            J_y.to(device) * alphay,
+            apply_alpha(alphax,J_x.to(device)),
+            apply_alpha(alphay,J_y.to(device)),
             J_z.to(device),
             dx,
             Cax,

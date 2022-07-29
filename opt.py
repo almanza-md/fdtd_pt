@@ -33,6 +33,8 @@ def auto_opt(
     smooth_current=False,
     filter_n=1,
     vec_a=False,
+    conv_a=False,
+    conv_size=3,
     Lx=2,
     Ly=2,checkpoint=50,
     save_dir=".",strmod="",
@@ -44,37 +46,75 @@ def auto_opt(
         device = torch.device("cuda")
 
     if vec_a:
-        if type(init[0]) == float:
-            if init[0] == 0:
-                ax = torch.linspace(
-                    start=alph0,
-                    end=-alph0,
-                    steps=ndelta,
-                    requires_grad=True,
-                    dtype=torch.float32,
-                    device=device,
-                )
-                ay = torch.ones_like(ax, requires_grad=True)
+        if conv_a:
+            if type(init[0]) == float:
+                if init[0] == 0:
+                    a0 = torch.zeros((ndelta,conv_size,conv_size),dtype=torch.float32,
+                        device=device,)
+                    middle = int((conv_size+1)/2)
+                    ax = a0.clone()
+                    ax[:,middle,middle] += torch.linspace(
+                        start=alph0,
+                        end=-alph0,
+                        steps=ndelta
+                    )
+                    ax.requires_grad=True
+                    ay = a0.clone()
+                    ay[:,middle,middle] += alph0*torch.ones_like(ndelta)
+                    ay.requires_grad=True
+                else:
+                    ax = init[0] * torch.ones(
+                        ndelta,
+                        dtype=torch.float32,
+                        device=device,
+                    )
+                    ax.requires_grad = True
+                    ay = init[0] * torch.ones(
+                        ndelta,
+                        dtype=torch.float32,
+                        device=device,
+                    )
+                    ay.requires_grad = True
             else:
-                ax = init[0] * torch.ones(
-                    ndelta,
-                    dtype=torch.float32,
-                    device=device,
+                ax = torch.tensor(
+                    init[0][0], dtype=torch.float32, requires_grad=True, device=device
                 )
-                ax.requires_grad = True
-                ay = init[0] * torch.ones(
-                    ndelta,
-                    dtype=torch.float32,
-                    device=device,
+                ay = torch.tensor(
+                    init[0][1], dtype=torch.float32, requires_grad=True, device=device
                 )
-                ay.requires_grad = True
         else:
-            ax = torch.tensor(
-                init[0][0], dtype=torch.float32, requires_grad=True, device=device
-            )
-            ay = torch.tensor(
-                init[0][1], dtype=torch.float32, requires_grad=True, device=device
-            )
+            if type(init[0]) == float:
+                if init[0] == 0:
+                    ax = torch.linspace(
+                        start=alph0,
+                        end=-alph0,
+                        steps=ndelta,
+                        requires_grad=True,
+                        dtype=torch.float32,
+                        device=device,
+                    )
+                    ay = alph0*torch.ones_like(ax)
+                    ay.requires_grad=True
+                else:
+                    ax = init[0] * torch.ones(
+                        ndelta,
+                        dtype=torch.float32,
+                        device=device,
+                    )
+                    ax.requires_grad = True
+                    ay = init[0] * torch.ones(
+                        ndelta,
+                        dtype=torch.float32,
+                        device=device,
+                    )
+                    ay.requires_grad = True
+            else:
+                ax = torch.tensor(
+                    init[0][0], dtype=torch.float32, requires_grad=True, device=device
+                )
+                ay = torch.tensor(
+                    init[0][1], dtype=torch.float32, requires_grad=True, device=device
+                )
     else:
         if type(init[0]) == float:
             if init[0] == 0:
@@ -325,10 +365,17 @@ def auto_opt(
         loss_hist.append(l)
 
         a_opt.step()
+        prefix = ''
+        if vec_a:
+            prefix='vec_'
+        elif conv_a:
+            prefix='conv_'
+        else:
+            pass
         if (i+1)%checkpoint==0:
-            torch.save(a_best, f"{save_dir}/{'vec_' if vec_a else ''}alpha_profile_{strmod}_{n}.pyt")
-            torch.save(se_best, f"{save_dir}/{'vec_' if vec_a else ''}sigma_0_{strmod}_{n}.pyt")
-            torch.save(sb_best, f"{save_dir}/{'vec_' if vec_a else ''}sigmastar_0_{strmod}_{n}.pyt")
+            torch.save(a_best, f"{save_dir}/{prefix}alpha_profile_{strmod}_{n}.pyt")
+            torch.save(se_best, f"{save_dir}/{prefix}sigma_0_{strmod}_{n}.pyt")
+            torch.save(sb_best, f"{save_dir}/{prefix}sigmastar_0_{strmod}_{n}.pyt")
         # lr_sched.step(loss)
     if loop:
         while not np.isclose(

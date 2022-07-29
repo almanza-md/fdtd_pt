@@ -94,6 +94,11 @@ def get_CD(
     Cay = (1 - dt * sigmay / 2) / (1 + dt * sigmay / 2)
     return Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay
 
+def identity_kernel(m,arr):
+    ret = torch.zeros((arr.shape[0],arr.shape[1],m,m),device=arr.device)
+    middle = int((m+1)/2)
+    ret[...,middle,middle] += 1
+    return ret
 
 # @torch.jit.script
 def get_alpha(alpha0, arr):
@@ -113,20 +118,18 @@ def get_alpha(alpha0, arr):
         else:
             n = alpha0[0].shape[0]
             m = alpha0[0].shape[1]
-            nx = arr.shape[0]
-            ny = arr.shape[1]
             alpha = (
-                torch.ones((nx, ny, m, m), device=arr.device),
-                torch.ones((nx, ny, m, m), device=arr.device),
-                torch.ones((nx, ny, m, m), device=arr.device),
+                identity_kernel(m,arr),
+                identity_kernel(m,arr),
+                identity_kernel(m,arr),
             )
             for i, a in enumerate(alpha0):
                 alphax = torch.ones((arr.shape[0], 1, m,m), device=arr.device)
                 alphay = torch.ones((1, arr.shape[1],m,m), device=arr.device)
-                alphax[0:n, 0,m,m] *= torch.flipud(a)
-                alphax[-n:, 0,m,m] *= a
-                alphay[0, 0:n,m,m] *= torch.flipud(a)
-                alphay[0, -n:,m,m] *= a
+                alphax[0:n, 0,m,m] = torch.flipud(a)
+                alphax[-n:, 0,m,m] = a
+                alphay[0, 0:n,m,m] = torch.flipud(a)
+                alphay[0, -n:,m,m] = a
                 alpha[i][:] *= alphax
                 alpha[i][:] *= alphay
     else:

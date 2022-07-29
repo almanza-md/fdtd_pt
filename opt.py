@@ -36,7 +36,7 @@ def auto_opt(
     Lx=2,
     Ly=2,checkpoint=50,
     save_dir=".",strmod="",
-    #sparse_j=False
+    npts = 1
 ):
     if torch.cuda.device_count()==0:
         device = torch.device('cpu')
@@ -231,6 +231,7 @@ def auto_opt(
         b_yb,
         b_zxb,
         b_zyb,
+        n=npts
     )
     del tb
     del xxb
@@ -259,10 +260,10 @@ def auto_opt(
     small0y = torch.argmin(torch.abs(yy[0, :]))
     #print(small0y)
     Bf = Bf[
-        big0x - small0x : big0x + small0x + 1, big0y - small0y : big0y + small0y + 1, :
+        big0x - small0x : big0x + small0x + 1, big0y - small0y : big0y + small0y + 1, ...
     ].clone()
     Ef = Ef[
-        big0x - small0x : big0x + small0x + 1, big0y - small0y : big0y + small0y + 1, :
+        big0x - small0x : big0x + small0x + 1, big0y - small0y : big0y + small0y + 1, ...
     ].clone()
     #print(Ef.shape)
     assert Ef.shape == (xx.shape[0],xx.shape[1],3)
@@ -302,7 +303,7 @@ def auto_opt(
             b_zx,
             b_zy,
             Ef,
-            Bf,
+            Bf
         )
         loss /= Uref
         loss.backward()

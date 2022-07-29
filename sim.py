@@ -225,8 +225,7 @@ def sim(
     b_zx,
     b_zy,
     Ef,
-    Bf,
-    n=1
+    Bf
 ):
 
     (Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay) = get_CD(
@@ -242,6 +241,7 @@ def sim(
         alphay = alpha
         # alphaz = alpha
     device = xx.device
+    n = int(Ef.shape[-1])
     Barr = torch.zeros((xx.shape[0], xx.shape[1], 3, n), device=device)
     Earr = torch.zeros((xx.shape[0], xx.shape[1], 3, n), device=device)
     nt = t.shape[0]

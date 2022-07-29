@@ -279,6 +279,7 @@ def auto_opt(
             func_a,
             softplus(se),
             softplus(sb),
+            t,
             xx,
             yy,
             ndelta,

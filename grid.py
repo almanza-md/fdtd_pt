@@ -120,16 +120,16 @@ def get_alpha(alpha0, arr):
         else:
             n = alpha0[0].shape[0]
             m = alpha0[0].shape[1]
-            # alpha = (
-            #    identity_kernel(m,arr),
-            #    identity_kernel(m,arr),
-            #    identity_kernel(m,arr),
-            # )
             alpha = (
-                torch.ones((arr.shape[0], arr.shape[1], m, m), device=arr.device),
-                torch.ones((arr.shape[0], arr.shape[1], m, m), device=arr.device),
-                torch.ones((arr.shape[0], arr.shape[1], m, m), device=arr.device),
+                identity_kernel(m,arr),
+                identity_kernel(m,arr),
+                identity_kernel(m,arr),
             )
+            #alpha = (
+            #    torch.ones((arr.shape[0], arr.shape[1], m, m), device=arr.device),
+            #    torch.ones((arr.shape[0], arr.shape[1], m, m), device=arr.device),
+            #    torch.ones((arr.shape[0], arr.shape[1], m, m), device=arr.device),
+            #)
             for i, a in enumerate(alpha0):
                 alphax = torch.ones((arr.shape[0], 1, m, m), device=arr.device)
                 alphay = torch.ones((1, arr.shape[1], m, m), device=arr.device)
@@ -137,8 +137,8 @@ def get_alpha(alpha0, arr):
                 alphax[-n:, 0, ...] *= a
                 alphay[0, 0:n, ...] *= torch.flipud(a)
                 alphay[0, -n:, ...] *= a
-                alpha[i][:] *= alphax
-                alpha[i][:] *= alphay
+                alpha[i][:] += alphax
+                alpha[i][:] += alphay
     else:
         n = alpha0.shape[0]
         alpha = torch.ones_like(arr)

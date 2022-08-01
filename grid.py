@@ -95,10 +95,10 @@ def get_CD(
     return Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay
 
 
-def identity_kernel(m, arr):
+def identity_kernel(m, ndelta, arr):
     ret = torch.zeros((arr.shape[0], arr.shape[1], m, m), device=arr.device)
     middle = int((m + 1) / 2) - 1
-    ret[..., middle, middle] += 1
+    ret[ndelta:-ndelta,ndelta:-ndelta, middle, middle] += 1
     return ret
 
 
@@ -121,9 +121,9 @@ def get_alpha(alpha0, arr):
             n = alpha0[0].shape[0]
             m = alpha0[0].shape[1]
             alpha = (
-                identity_kernel(m,arr),
-                identity_kernel(m,arr),
-                identity_kernel(m,arr),
+                identity_kernel(m, n, arr),
+                identity_kernel(m, n, arr),
+                identity_kernel(m, n, arr),
             )
             #alpha = (
             #    torch.ones((arr.shape[0], arr.shape[1], m, m), device=arr.device),

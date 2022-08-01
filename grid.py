@@ -170,7 +170,7 @@ def apply_alpha(alpha, J):
         return J
     pick_stack = torch.stack([torch.unsqueeze(hole_cut(J,px,py),dim=1) for px, py in jpos])
     jconv = torch.reshape(J, (1, 1, J.shape[0], J.shape[1])).expand(len(jpos),1,-1,-1)
-    alphaconv = torch.stack([alpha[px : px + 1, py : py + 1, :, :]] for px,py in jpos)
+    alphaconv = torch.stack([alpha[px : px + 1, py : py + 1, :, :] for px,py in jpos])
     jcout = pick_stack*torch.nn.functional.conv2d(jconv,alphaconv,padding=pad)
     Jret += torch.sum(jcout,dim=(0,1))
     return Jret

@@ -165,15 +165,10 @@ def apply_alpha(alpha, J):
         return alpha * J
     pad = int((alpha.shape[-1] - 1) / 2)
     Jret = torch.zeros_like(J)
-    jpos = torch.argwhere(J)
-    for p in jpos:
-        px = p[0]
-        py = p[1]
-        Jret += hole_cut(J, px, py) * torch.squeeze(
-            torch.nn.functional.conv2d(
-                torch.reshape(J, (1, 1, J.shape[0], J.shape[1])),
-                alpha[px : px + 1, py : py + 1, :, :],
-                padding=pad,
-            )
-        )
+    jpos = [(p[0],p[1]) for p in torch.argwhere(J)]
+    pick_stack = torch.stack([torch.unsqueeze(hole_cut(J,px,py),dim=1) for px, py in jpos])
+    jconv = torch.reshape(J, (1, 1, J.shape[0], J.shape[1])).expand(len(jpos),1,-1,-1)
+    alphaconv = torch.stack([alpha[px : px + 1, py : py + 1, :, :]] for px,py in jpos)
+    jcout = pick_stack*torch.nn.functional.conv2d(jconv,alphaconv,padding=pad)
+    Jret += torch.sum(jcout,dim=(0,1))
     return Jret

@@ -166,6 +166,8 @@ def apply_alpha(alpha, J):
     pad = int((alpha.shape[-1] - 1) / 2)
     Jret = torch.zeros_like(J)
     jpos = [(p[0],p[1]) for p in torch.argwhere(J)]
+    if len(jpos==0):
+        return J
     pick_stack = torch.stack([torch.unsqueeze(hole_cut(J,px,py),dim=1) for px, py in jpos])
     jconv = torch.reshape(J, (1, 1, J.shape[0], J.shape[1])).expand(len(jpos),1,-1,-1)
     alphaconv = torch.stack([alpha[px : px + 1, py : py + 1, :, :]] for px,py in jpos)

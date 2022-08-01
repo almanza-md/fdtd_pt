@@ -165,7 +165,7 @@ def apply_alpha(alpha, J):
         return alpha * J
     pad = int((alpha.shape[-1] - 1) / 2)
     Jret = torch.zeros_like(J)
-    jpos = [(p[0],p[1]) for p in torch.argwhere(J)]
+    jpos = J.to_sparse().indices().T# [(p[0],p[1]) for p in torch.argwhere(J)]
     if len(jpos)==0:
         return J
     pick_stack = torch.stack([hole_cut(J,px,py) for px, py in jpos])

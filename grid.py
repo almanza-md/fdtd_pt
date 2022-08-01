@@ -131,12 +131,12 @@ def get_alpha(alpha0, arr):
             #    torch.ones((arr.shape[0], arr.shape[1], m, m), device=arr.device),
             #)
             for i, a in enumerate(alpha0):
-                alphax = torch.ones((arr.shape[0], 1, m, m), device=arr.device)
-                alphay = torch.ones((1, arr.shape[1], m, m), device=arr.device)
-                alphax[0:n, 0, ...] *= torch.flipud(a)
-                alphax[-n:, 0, ...] *= a
-                alphay[0, 0:n, ...] *= torch.flipud(a)
-                alphay[0, -n:, ...] *= a
+                alphax = torch.zeros((arr.shape[0], 1, m, m), device=arr.device)
+                alphay = torch.zeros((1, arr.shape[1], m, m), device=arr.device)
+                alphax[0:n, 0, ...] += torch.flipud(a)
+                alphax[-n:, 0, ...] += a
+                alphay[0, 0:n, ...] += torch.flipud(a)
+                alphay[0, -n:, ...] += a
                 alpha[i][:] += alphax
                 alpha[i][:] += alphay
     else:

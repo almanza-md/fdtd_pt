@@ -94,11 +94,13 @@ def get_CD(
     Cay = (1 - dt * sigmay / 2) / (1 + dt * sigmay / 2)
     return Dbx, Dax, Cbx, Cax, Dby, Day, Cby, Cay
 
-def identity_kernel(m,arr):
-    ret = torch.zeros((arr.shape[0],arr.shape[1],m,m),device=arr.device)
-    middle = int((m+1)/2)-1
-    ret[...,middle,middle] += 1
+
+def identity_kernel(m, arr):
+    ret = torch.zeros((arr.shape[0], arr.shape[1], m, m), device=arr.device)
+    middle = int((m + 1) / 2) - 1
+    ret[..., middle, middle] += 1
     return ret
+
 
 # @torch.jit.script
 def get_alpha(alpha0, arr):
@@ -118,18 +120,23 @@ def get_alpha(alpha0, arr):
         else:
             n = alpha0[0].shape[0]
             m = alpha0[0].shape[1]
+            # alpha = (
+            #    identity_kernel(m,arr),
+            #    identity_kernel(m,arr),
+            #    identity_kernel(m,arr),
+            # )
             alpha = (
-                identity_kernel(m,arr),
-                identity_kernel(m,arr),
-                identity_kernel(m,arr),
+                torch.ones((arr.shape[0], arr.shape[1], m, m), device=arr.device),
+                torch.ones((arr.shape[0], arr.shape[1], m, m), device=arr.device),
+                torch.ones((arr.shape[0], arr.shape[1], m, m), device=arr.device),
             )
             for i, a in enumerate(alpha0):
-                alphax = torch.ones((arr.shape[0], 1, m,m), device=arr.device)
-                alphay = torch.ones((1, arr.shape[1],m,m), device=arr.device)
-                alphax[0:n, 0,...] = torch.flipud(a)
-                alphax[-n:, 0,...] = a
-                alphay[0, 0:n,...] = torch.flipud(a)
-                alphay[0, -n:,...] = a
+                alphax = torch.ones((arr.shape[0], 1, m, m), device=arr.device)
+                alphay = torch.ones((1, arr.shape[1], m, m), device=arr.device)
+                alphax[0:n, 0, ...] *= torch.flipud(a)
+                alphax[-n:, 0, ...] *= a
+                alphay[0, 0:n, ...] *= torch.flipud(a)
+                alphay[0, -n:, ...] *= a
                 alpha[i][:] *= alphax
                 alpha[i][:] *= alphay
     else:
@@ -154,7 +161,7 @@ def hole_cut(arr, i, j):
 
 
 def apply_alpha(alpha, J):
-    if len(alpha.shape)==2:
+    if len(alpha.shape) == 2:
         return alpha * J
     pad = int((alpha.shape[-1] - 1) / 2)
     Jret = torch.zeros_like(J)

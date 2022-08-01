@@ -153,24 +153,29 @@ def get_alpha(alpha0, arr):
 
     return alpha
 
-
-def hole_cut(arr, i, j):
+@torch.jit.script
+def hole_cut(arr, pos):
     r = torch.zeros_like(arr)
-    r[i, j] += 1
+    r[pos[0],pos[1]] += 1
     return r
-
-
+@torch.jit.script
+def point_conv(arr, pos, kern):
+    ret = torch.zeros_like(arr)
+    w = int((kern[0].shape[-1]+1)/2) - 1
+    for (p,k) in zip(pos,kern):        
+        ret[p[0],p[1]] = torch.sum(arr[p[0]-w:p[0]+w+1,p[1]-w:p[1]+w+1]*k)
+    return ret
 def apply_alpha(alpha, J):
     if len(alpha.shape) == 2:
         return alpha * J
     pad = int((alpha.shape[-1] - 1) / 2)
-    Jret = torch.zeros_like(J)
+    #Jret = torch.zeros_like(J)
     jpos = J.to_sparse().indices().T# [(p[0],p[1]) for p in torch.argwhere(J)]
     if len(jpos)==0:
         return J
-    pick_stack = torch.stack([hole_cut(J,px,py) for px, py in jpos])
+    pick_stack = torch.stack([hole_cut(J,p) for p in jpos])
     jconv = torch.reshape(J, (1,1, J.shape[0], J.shape[1])).expand(1,len(jpos),-1,-1)
-    alphaconv = torch.stack([alpha[px : px + 1, py, :, :] for px,py in jpos],dim=0)
+    alphaconv = torch.stack([alpha[px : px+1, py, :, :] for px,py in jpos],dim=0)
     jcout = pick_stack*torch.squeeze(torch.nn.functional.conv2d(jconv,alphaconv,padding=pad,groups=len(jpos)))
-    Jret += torch.sum(jcout,dim=0)
-    return Jret
+    return torch.sum(jcout,dim=0)
+    #return Jret#point_conv(J,jpos,alphaconv)
